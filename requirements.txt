@@ -1,0 +1,12 @@
+# Machine Shop Suite - 3D Printing Quote Engine
+# Production dependencies
+
+# Web framework
+Flask==3.0.0
+Werkzeug==3.0.1
+
+# WSGI server for production
+gunicorn==21.2.0
+
+# Utilities
+python-dotenv==1.0.0

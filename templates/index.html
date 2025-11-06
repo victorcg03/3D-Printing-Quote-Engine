@@ -1,0 +1,1111 @@
+{% extends "base.html" %}
+
+{% block title %}3D Printing Quote Engine - Machine Shop Suite{% endblock %}
+
+{% block extra_head %}
+<!-- Three.js for STL preview -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/STLLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <!-- Left Column: Configuration -->
+    <div class="space-y-6">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">Get Your 3D Printing Quote</h2>
+
+            <!-- File Upload -->
+            <div class="mb-6">
+                <div class="flex items-center justify-between mb-2">
+                    <label class="text-sm font-medium text-gray-700">Upload STL Files</label>
+                    <span class="bg-[#ff5733] text-white text-xs px-2 py-1 rounded-full">Multi-File Support</span>
+                </div>
+                <div id="dropzone" class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer transition-colors hover:border-[#ff5733] hover:bg-orange-50">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                    </svg>
+                    <p class="mt-2 text-sm font-semibold text-gray-700">Click to upload or drag and drop</p>
+                    <p class="text-xs text-gray-500 mt-1">STL files only (max 100MB each)</p>
+                    <p class="text-xs text-[#ff5733] font-medium mt-2">📦 Upload multiple files at once!</p>
+                    <input type="file" id="fileInput" accept=".stl" multiple class="hidden">
+                </div>
+            </div>
+
+            <!-- Uploaded Files List -->
+            <div id="filesList" class="mb-6 hidden">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="text-sm font-medium text-gray-700">Uploaded Files (<span id="fileCount">0</span>)</h3>
+                    <button onclick="clearAllFiles()" class="text-xs text-red-600 hover:text-red-800">Clear All</button>
+                </div>
+                <div id="filesContainer" class="space-y-3 max-h-64 overflow-y-auto">
+                    <!-- Files will be added here dynamically -->
+                </div>
+            </div>
+
+            <!-- Global Settings Toggle -->
+            <div class="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <label class="flex items-start space-x-2 cursor-pointer">
+                    <input type="checkbox" id="useGlobalSettings" checked class="w-4 h-4 text-[#ff5733] border-gray-300 rounded focus:ring-[#ff5733] mt-0.5">
+                    <div>
+                        <span class="text-sm font-medium text-gray-900">Use same settings for all files</span>
+                        <p class="text-xs text-gray-600 mt-1">When checked: Apply settings above to all files. Unchecked: Configure each file individually.</p>
+                    </div>
+                </label>
+            </div>
+
+            <!-- Global Settings Section -->
+            <div id="globalSettingsSection">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Global Settings</h3>
+
+                <!-- Printer Selection -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Printer</label>
+                    <select id="printer" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-[#ff5733] focus:border-[#ff5733]">
+                        <option value="">Select printer...</option>
+                        {% for key, printer in printers.items() %}
+                        <option value="{{ key }}" {% if key == 'prusa_mk3s' %}selected{% endif %}>{{ printer.name }} ({{ printer.bed_size_mm[0] }}x{{ printer.bed_size_mm[1] }}x{{ printer.bed_size_mm[2] }}mm)</option>
+                        {% endfor %}
+                    </select>
+                    <p id="printerDesc" class="mt-1 text-xs text-gray-500">Nozzle: 0.4mm, Max Speed: 200mm/s</p>
+                </div>
+
+                <!-- Material Selection -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Material</label>
+                    <select id="material" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-[#ff5733] focus:border-[#ff5733]">
+                        <option value="">Select material...</option>
+                        {% for key, mat in materials.items() %}
+                        <option value="{{ key }}" {% if key == 'pla' %}selected{% endif %}>{{ mat.name }} - ₹{{ mat.price_per_kg }}/kg</option>
+                        {% endfor %}
+                    </select>
+                    <p id="materialDesc" class="mt-1 text-xs text-gray-500">Density: 1.24 g/cm³, Temp: 215°C/55°C</p>
+                </div>
+
+                <!-- Print Quality -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Print Quality</label>
+                    <select id="quality" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-[#ff5733] focus:border-[#ff5733]">
+                        <option value="">Select quality...</option>
+                        {% for key, qual in qualities.items() %}
+                        <option value="{{ key }}" {% if key == 'standard' %}selected{% endif %}>{{ qual.name }} ({{ qual.layer_height }}mm)</option>
+                        {% endfor %}
+                    </select>
+                    <p id="qualityDesc" class="mt-1 text-xs text-gray-500">Layer height: 0.2mm - Balanced quality & speed</p>
+                </div>
+
+                <!-- Infill Density -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Infill Density: <span id="infillValue" class="text-[#ff5733] font-bold">20%</span>
+                        <span id="infillStrength" class="text-xs text-gray-500">(Light)</span>
+                    </label>
+                    <input type="range" id="infill" min="5" max="100" value="20" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                    <div class="flex justify-between text-xs text-gray-500 mt-1">
+                        <span>5% (Decorative)</span>
+                        <span>50% (Standard)</span>
+                        <span>100% (Maximum)</span>
+                    </div>
+                    <p class="mt-1 text-xs text-gray-500">Higher infill = stronger but uses more material & time</p>
+                </div>
+
+                <!-- Quantity -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Quantity (per file)</label>
+                    <input type="number" id="quantity" value="1" min="1" max="1000" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-[#ff5733] focus:border-[#ff5733]">
+                </div>
+
+                <!-- Support Material -->
+                <div class="mb-6">
+                    <label class="flex items-center space-x-2 cursor-pointer">
+                        <input type="checkbox" id="support" class="w-4 h-4 text-[#ff5733] border-gray-300 rounded focus:ring-[#ff5733]">
+                        <span class="text-sm text-gray-700">Add support material</span>
+                    </label>
+                </div>
+
+                <!-- Post-Processing -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Post-Processing (Optional)</label>
+                    <select id="postProcessing" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-[#ff5733] focus:border-[#ff5733]">
+                        <option value="">None</option>
+                    </select>
+                    <p id="postProcessingDesc" class="mt-1 text-xs text-gray-500">Additional finishing services</p>
+                </div>
+            </div>
+
+            <!-- Process Button -->
+            <button id="calculateBtn" class="w-full bg-[#ff5733] text-white py-3 px-4 rounded-md hover:bg-[#e63c1a] transition-colors font-medium disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>
+                <span id="btnText">Upload STL files to calculate</span>
+                <span id="btnSpinner" class="hidden">
+                    <svg class="animate-spin h-5 w-5 inline-block" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Processing...
+                </span>
+            </button>
+
+            <!-- Queue Processing Info -->
+            <div class="mt-3 bg-green-50 border border-green-200 rounded-lg p-3">
+                <div class="flex items-start space-x-2">
+                    <svg class="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                    </svg>
+                    <div class="text-xs text-green-800">
+                        <p class="font-medium">Sequential Processing</p>
+                        <p class="mt-1">Files are processed one-by-one to prevent server overload. You'll see real-time progress for each file.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Preview & Quote -->
+    <div class="space-y-6">
+        <!-- 3D Preview -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-900">3D Preview</h3>
+                <div class="flex items-center space-x-2">
+                    <button id="previewAll" class="text-xs px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded transition-colors">View All</button>
+                    <button id="resetCamera" class="text-xs px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded transition-colors">Reset Camera</button>
+                </div>
+            </div>
+            <div id="stlViewer" class="w-full h-80 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg flex items-center justify-center border border-gray-200">
+                <div class="text-center">
+                    <svg class="mx-auto h-16 w-16 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                    </svg>
+                    <p class="text-gray-400 text-sm">Upload STL files to preview</p>
+                    <p class="text-gray-400 text-xs mt-1">Drag to rotate • Scroll to zoom</p>
+                </div>
+            </div>
+            <div id="previewFileSelector" class="mt-3 hidden">
+                <select id="previewFileSelect" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-[#ff5733] focus:border-[#ff5733]">
+                    <option value="all">View All Files</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Processing Queue Status -->
+        <div id="queueStatus" class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hidden">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Processing Queue</h3>
+            <div class="space-y-3">
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">Files in queue:</span>
+                    <span id="queueCount" class="font-medium">0</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">Currently processing:</span>
+                    <span id="currentFile" class="font-medium text-[#ff5733]">-</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">Progress:</span>
+                    <span id="queueProgress" class="font-medium">0/0</span>
+                </div>
+            </div>
+            <div class="mt-4">
+                <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div id="queueProgressBar" class="bg-[#ff5733] h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Individual File Results -->
+        <div id="fileResultsContainer" class="space-y-4">
+            <!-- File results will be added here dynamically -->
+        </div>
+
+        <!-- Combined Total -->
+        <div id="combinedTotal" class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hidden">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-900">Combined Total</h3>
+                <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">Batch Quote</span>
+            </div>
+
+            <div class="space-y-2 text-sm mb-4">
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Total Files:</span>
+                    <span id="totalFiles" class="font-medium">0</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Total Weight:</span>
+                    <span id="totalWeight" class="font-medium">0g</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Total Print Time:</span>
+                    <span id="totalTime" class="font-medium">0h</span>
+                </div>
+            </div>
+
+            <div class="border-t border-gray-200 pt-3 mb-4">
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">Total Before Tax:</span>
+                    <span id="combinedBeforeTax" class="font-medium">₹0.00</span>
+                </div>
+                <div class="flex justify-between text-sm mt-2">
+                    <span class="text-gray-600">GST (<span id="combinedGstRate">18</span>%):</span>
+                    <span id="combinedGstAmount" class="font-medium">₹0.00</span>
+                </div>
+            </div>
+
+            <div class="bg-orange-50 rounded-md p-4 border border-orange-200">
+                <div class="flex justify-between items-center">
+                    <span class="text-lg font-semibold text-gray-900">Grand Total:</span>
+                    <span id="grandTotal" class="text-2xl font-bold text-[#ff5733]">₹0.00</span>
+                </div>
+            </div>
+
+            <div class="mt-4 text-xs text-gray-500">
+                <p>* Prices are indicative and may vary based on actual printing conditions</p>
+            </div>
+        </div>
+
+        <!-- Error Message -->
+        <div id="errorMessage" class="bg-red-50 border border-red-200 rounded-md p-4 hidden">
+            <div class="flex">
+                <svg class="w-5 h-5 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                </svg>
+                <div class="ml-3">
+                    <p id="errorText" class="text-sm text-red-800"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Global state
+let uploadedFiles = []; // Array of {file, id, settings}
+let config = {};
+let fileIdCounter = 0;
+
+// Three.js preview state
+let scene, camera, renderer, controls;
+let loadedMeshes = []; // Array of {fileId, mesh, geometry}
+
+// Load configuration on page load
+async function loadConfig() {
+    try {
+        const response = await fetch('/api/config');
+        const data = await response.json();
+        if (data.success) {
+            config = data.config;
+        }
+    } catch (error) {
+        console.error('Error loading config:', error);
+    }
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', async () => {
+    await loadConfig();
+    populatePostProcessingDropdown();
+    setupEventListeners();
+    init3DViewer();
+
+    // Trigger initial updates for default selected values
+    document.getElementById('printer').dispatchEvent(new Event('change'));
+    document.getElementById('material').dispatchEvent(new Event('change'));
+    document.getElementById('quality').dispatchEvent(new Event('change'));
+});
+
+// Populate post-processing dropdown
+function populatePostProcessingDropdown() {
+    const select = document.getElementById('postProcessing');
+    select.innerHTML = '<option value="">None</option>';
+
+    const postProcessing = config.post_processing || {};
+    for (const [key, pp] of Object.entries(postProcessing)) {
+        const option = document.createElement('option');
+        option.value = key;
+        option.textContent = `${pp.name} (+₹${pp.price})`;
+        select.appendChild(option);
+    }
+}
+
+// Initialize Three.js 3D viewer
+function init3DViewer() {
+    const viewer = document.getElementById('stlViewer');
+    if (!viewer || renderer) return; // Already initialized
+
+    // Create scene
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xf8f9fa);
+
+    // Create camera
+    const aspect = viewer.clientWidth / viewer.clientHeight;
+    camera = new THREE.PerspectiveCamera(45, aspect, 0.1, 10000);
+    camera.position.set(100, 100, 100);
+
+    // Create renderer
+    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(viewer.clientWidth, viewer.clientHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+
+    // Clear viewer and add renderer
+    viewer.innerHTML = '';
+    viewer.appendChild(renderer.domElement);
+
+    // Add lights
+    const ambientLight = new THREE.AmbientLight(0x404040, 2);
+    scene.add(ambientLight);
+
+    const directionalLight1 = new THREE.DirectionalLight(0xffffff, 1);
+    directionalLight1.position.set(1, 1, 1);
+    scene.add(directionalLight1);
+
+    const directionalLight2 = new THREE.DirectionalLight(0xffffff, 0.5);
+    directionalLight2.position.set(-1, -1, -1);
+    scene.add(directionalLight2);
+
+    // Add controls
+    controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.screenSpacePanning = false;
+    controls.minDistance = 10;
+    controls.maxDistance = 1000;
+
+    // Animation loop
+    function animate() {
+        requestAnimationFrame(animate);
+        controls.update();
+        renderer.render(scene, camera);
+    }
+    animate();
+
+    // Handle window resize
+    window.addEventListener('resize', () => {
+        if (!viewer.clientWidth) return;
+        camera.aspect = viewer.clientWidth / viewer.clientHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(viewer.clientWidth, viewer.clientHeight);
+    });
+
+    // Setup preview controls
+    document.getElementById('previewAll').addEventListener('click', () => {
+        document.getElementById('previewFileSelect').value = 'all';
+        updatePreview('all');
+    });
+
+    document.getElementById('resetCamera').addEventListener('click', () => {
+        resetCameraPosition();
+    });
+
+    document.getElementById('previewFileSelect').addEventListener('change', (e) => {
+        updatePreview(e.target.value);
+    });
+}
+
+function clearAllFiles() {
+    uploadedFiles = [];
+    updateFilesUI();
+    updateCalculateButton();
+    clearPreview();
+    document.getElementById('fileResultsContainer').innerHTML = '';
+    document.getElementById('combinedTotal').classList.add('hidden');
+}
+
+// Load STL file into preview
+async function loadSTLPreview(fileObj) {
+    const loader = new THREE.STLLoader();
+    const reader = new FileReader();
+
+    return new Promise((resolve) => {
+        reader.onload = (e) => {
+            try {
+                const geometry = loader.parse(e.target.result);
+
+                // Create material with random color or specific color
+                const colors = [0xff5733, 0x3498db, 0x2ecc71, 0xf39c12, 0x9b59b6, 0xe74c3c];
+                const color = colors[loadedMeshes.length % colors.length];
+                const material = new THREE.MeshPhongMaterial({
+                    color: color,
+                    specular: 0x111111,
+                    shininess: 200,
+                    flatShading: false
+                });
+
+                const mesh = new THREE.Mesh(geometry, material);
+
+                // Center the geometry
+                geometry.computeBoundingBox();
+                const center = new THREE.Vector3();
+                geometry.boundingBox.getCenter(center);
+                geometry.translate(-center.x, -center.y, -center.z);
+
+                // Store mesh
+                loadedMeshes.push({
+                    fileId: fileObj.id,
+                    mesh: mesh,
+                    geometry: geometry,
+                    fileName: fileObj.file.name
+                });
+
+                resolve(mesh);
+            } catch (error) {
+                console.error('Error loading STL:', error);
+                resolve(null);
+            }
+        };
+
+        reader.readAsArrayBuffer(fileObj.file);
+    });
+}
+
+// Update preview to show specific file or all files
+function updatePreview(fileIdOrAll) {
+    if (!scene) return;
+
+    // Remove all meshes from scene
+    loadedMeshes.forEach(item => {
+        scene.remove(item.mesh);
+    });
+
+    if (fileIdOrAll === 'all') {
+        // Show all files with spacing
+        const spacing = 80;
+        const totalWidth = (loadedMeshes.length - 1) * spacing;
+        const startX = -totalWidth / 2;
+
+        loadedMeshes.forEach((item, index) => {
+            item.mesh.position.x = startX + (index * spacing);
+            item.mesh.position.y = 0;
+            item.mesh.position.z = 0;
+            scene.add(item.mesh);
+        });
+    } else {
+        // Show specific file
+        const fileId = parseInt(fileIdOrAll);
+        const item = loadedMeshes.find(m => m.fileId === fileId);
+        if (item) {
+            item.mesh.position.set(0, 0, 0);
+            scene.add(item.mesh);
+        }
+    }
+
+    resetCameraPosition();
+}
+
+// Reset camera to fit all visible objects
+function resetCameraPosition() {
+    if (!scene || !camera || !controls) return;
+
+    // Calculate bounding box of all visible meshes
+    const box = new THREE.Box3();
+    scene.traverse((object) => {
+        if (object.isMesh && object.visible) {
+            box.expandByObject(object);
+        }
+    });
+
+    if (box.isEmpty()) {
+        camera.position.set(100, 100, 100);
+        camera.lookAt(0, 0, 0);
+        controls.target.set(0, 0, 0);
+        controls.update();
+        return;
+    }
+
+    const center = box.getCenter(new THREE.Vector3());
+    const size = box.getSize(new THREE.Vector3());
+    const maxDim = Math.max(size.x, size.y, size.z);
+    const fov = camera.fov * (Math.PI / 180);
+    let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2));
+    cameraZ *= 2.5; // Add some padding
+
+    camera.position.set(
+        center.x + cameraZ * 0.5,
+        center.y + cameraZ * 0.5,
+        center.z + cameraZ
+    );
+    camera.lookAt(center);
+    controls.target.copy(center);
+    controls.update();
+}
+
+// Clear all preview meshes
+function clearPreview() {
+    if (!scene) return;
+
+    loadedMeshes.forEach(item => {
+        scene.remove(item.mesh);
+        item.geometry.dispose();
+        item.mesh.material.dispose();
+    });
+
+    loadedMeshes = [];
+
+    // Hide file selector
+    document.getElementById('previewFileSelector').classList.add('hidden');
+    document.getElementById('previewFileSelect').innerHTML = '<option value="all">View All Files</option>';
+}
+
+function setupEventListeners() {
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('fileInput');
+    const printer = document.getElementById('printer');
+    const material = document.getElementById('material');
+    const quality = document.getElementById('quality');
+    const infill = document.getElementById('infill');
+    const calculateBtn = document.getElementById('calculateBtn');
+    const useGlobalSettings = document.getElementById('useGlobalSettings');
+
+    // File upload
+    dropzone.addEventListener('click', () => fileInput.click());
+    dropzone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropzone.classList.add('border-[#ff5733]', 'bg-orange-50');
+    });
+    dropzone.addEventListener('dragleave', () => {
+        dropzone.classList.remove('border-[#ff5733]', 'bg-orange-50');
+    });
+    dropzone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropzone.classList.remove('border-[#ff5733]', 'bg-orange-50');
+        const files = Array.from(e.dataTransfer.files);
+        handleMultipleFileUpload(files);
+    });
+    fileInput.addEventListener('change', (e) => {
+        const files = Array.from(e.target.files);
+        handleMultipleFileUpload(files);
+    });
+
+    // Printer selection - update button state and description
+    printer.addEventListener('change', () => {
+        const prn = config.printers?.[printer.value];
+        if (prn) {
+            document.getElementById('printerDesc').textContent =
+                `Nozzle: ${prn.nozzle_diameter_mm}mm, Max Speed: ${prn.max_print_speed_mm_s}mm/s`;
+        } else {
+            document.getElementById('printerDesc').textContent = '';
+        }
+        updateCalculateButton();
+    });
+
+    // Material selection - update description and button
+    material.addEventListener('change', () => {
+        const mat = config.materials?.[material.value];
+        if (mat) {
+            document.getElementById('materialDesc').textContent =
+                `Density: ${mat.density_g_cm3} g/cm³, Temp: ${mat.extruder_temp}°C/${mat.bed_temp}°C`;
+        } else {
+            document.getElementById('materialDesc').textContent = '';
+        }
+        updateCalculateButton();
+    });
+
+    // Post-processing selection - update description
+    const postProcessing = document.getElementById('postProcessing');
+    postProcessing.addEventListener('change', () => {
+        const pp = config.post_processing?.[postProcessing.value];
+        if (pp) {
+            document.getElementById('postProcessingDesc').textContent =
+                `${pp.description} - ₹${pp.price}`;
+        } else {
+            document.getElementById('postProcessingDesc').textContent = 'Additional finishing services';
+        }
+    });
+
+    // Quality selection - update button state and description
+    quality.addEventListener('change', () => {
+        const qual = config.print_qualities?.[quality.value];
+        if (qual) {
+            const descriptions = {
+                'draft': 'Layer height: 0.3mm - Fast printing, lower detail',
+                'standard': 'Layer height: 0.2mm - Balanced quality & speed',
+                'fine': 'Layer height: 0.15mm - High detail, slower',
+                'ultra_fine': 'Layer height: 0.1mm - Maximum detail, very slow'
+            };
+            document.getElementById('qualityDesc').textContent =
+                descriptions[quality.value] || `Layer height: ${qual.layer_height}mm`;
+        } else {
+            document.getElementById('qualityDesc').textContent = '';
+        }
+        updateCalculateButton();
+    });
+
+    // Infill slider
+    infill.addEventListener('input', () => {
+        const val = parseInt(infill.value);
+        document.getElementById('infillValue').textContent = val + '%';
+
+        // Update strength label
+        let strength = '';
+        if (val < 15) strength = '(Decorative only)';
+        else if (val < 25) strength = '(Light)';
+        else if (val < 40) strength = '(Moderate)';
+        else if (val < 60) strength = '(Strong)';
+        else if (val < 80) strength = '(Very Strong)';
+        else strength = '(Maximum Strength)';
+
+        document.getElementById('infillStrength').textContent = strength;
+    });
+
+    // Global settings toggle
+    useGlobalSettings.addEventListener('change', () => {
+        updateFilesUI();
+        updateCalculateButton();
+    });
+
+    // Calculate button
+    calculateBtn.addEventListener('click', processBatch);
+}
+
+async function handleMultipleFileUpload(files) {
+    const validFiles = files.filter(f => f.name.toLowerCase().endsWith('.stl'));
+
+    if (validFiles.length === 0) {
+        showError('Please upload STL files only');
+        return;
+    }
+
+    if (files.length !== validFiles.length) {
+        showError(`${files.length - validFiles.length} file(s) skipped - only STL files are accepted`);
+    }
+
+    // Add files to the list
+    const newFileObjs = [];
+    validFiles.forEach(file => {
+        const fileId = ++fileIdCounter;
+        const fileObj = {
+            id: fileId,
+            file: file,
+            useGlobal: true
+        };
+        uploadedFiles.push(fileObj);
+        newFileObjs.push(fileObj);
+    });
+
+    updateFilesUI();
+    updateCalculateButton();
+
+    // Load STL previews asynchronously
+    for (const fileObj of newFileObjs) {
+        await loadSTLPreview(fileObj);
+    }
+
+    // Update preview selector
+    updatePreviewSelector();
+
+    // Show all files in preview
+    updatePreview('all');
+}
+
+// Update preview file selector dropdown
+function updatePreviewSelector() {
+    const select = document.getElementById('previewFileSelect');
+    const selector = document.getElementById('previewFileSelector');
+
+    if (loadedMeshes.length === 0) {
+        selector.classList.add('hidden');
+        return;
+    }
+
+    // Clear and rebuild options
+    select.innerHTML = '<option value="all">View All Files</option>';
+
+    loadedMeshes.forEach(item => {
+        const option = document.createElement('option');
+        option.value = item.fileId;
+        option.textContent = item.fileName;
+        select.appendChild(option);
+    });
+
+    // Show selector if more than one file
+    if (loadedMeshes.length > 1) {
+        selector.classList.remove('hidden');
+    } else {
+        selector.classList.add('hidden');
+    }
+}
+
+function removeFile(fileId) {
+    uploadedFiles = uploadedFiles.filter(f => f.id !== fileId);
+
+    // Remove from preview
+    const meshIndex = loadedMeshes.findIndex(m => m.fileId === fileId);
+    if (meshIndex !== -1) {
+        const item = loadedMeshes[meshIndex];
+        scene.remove(item.mesh);
+        item.geometry.dispose();
+        item.mesh.material.dispose();
+        loadedMeshes.splice(meshIndex, 1);
+    }
+
+    updateFilesUI();
+    updateCalculateButton();
+    updatePreviewSelector();
+
+    // Update preview to show remaining files
+    if (loadedMeshes.length > 0) {
+        updatePreview('all');
+    } else {
+        clearPreview();
+    }
+}
+
+function updateFilesUI() {
+    const container = document.getElementById('filesContainer');
+    const filesList = document.getElementById('filesList');
+    const useGlobal = document.getElementById('useGlobalSettings').checked;
+
+    if (uploadedFiles.length === 0) {
+        filesList.classList.add('hidden');
+        return;
+    }
+
+    filesList.classList.remove('hidden');
+    document.getElementById('fileCount').textContent = uploadedFiles.length;
+
+    container.innerHTML = '';
+
+    uploadedFiles.forEach(fileObj => {
+        const div = document.createElement('div');
+        div.className = 'bg-gray-50 rounded-lg p-3 border border-gray-200';
+
+        if (useGlobal) {
+            div.innerHTML = `
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center space-x-2 flex-1">
+                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                        </svg>
+                        <span class="text-sm text-gray-700 truncate">${fileObj.file.name}</span>
+                        <span class="text-xs text-gray-500">(${(fileObj.file.size / 1024 / 1024).toFixed(2)} MB)</span>
+                    </div>
+                    <button onclick="removeFile(${fileObj.id})" class="text-red-600 hover:text-red-800 ml-2">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                        </svg>
+                    </button>
+                </div>
+            `;
+        } else {
+            // Individual settings for each file
+            div.innerHTML = `
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center space-x-2 flex-1">
+                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                            </svg>
+                            <span class="text-sm font-medium text-gray-700 truncate">${fileObj.file.name}</span>
+                        </div>
+                        <button onclick="removeFile(${fileObj.id})" class="text-red-600 hover:text-red-800">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                        <select data-file="${fileObj.id}" data-field="printer" class="px-2 py-1 border border-gray-300 rounded">
+                            <option value="">Printer...</option>
+                            ${Object.entries(config.printers || {}).map(([key, p]) =>
+                                `<option value="${key}">${p.name}</option>`
+                            ).join('')}
+                        </select>
+                        <select data-file="${fileObj.id}" data-field="material" class="px-2 py-1 border border-gray-300 rounded">
+                            <option value="">Material...</option>
+                            ${Object.entries(config.materials || {}).map(([key, m]) =>
+                                `<option value="${key}">${m.name}</option>`
+                            ).join('')}
+                        </select>
+                        <select data-file="${fileObj.id}" data-field="quality" class="px-2 py-1 border border-gray-300 rounded">
+                            <option value="">Quality...</option>
+                            ${Object.entries(config.print_qualities || {}).map(([key, q]) =>
+                                `<option value="${key}">${q.name}</option>`
+                            ).join('')}
+                        </select>
+                        <input type="number" data-file="${fileObj.id}" data-field="infill" placeholder="Infill %" min="5" max="100" value="20" class="px-2 py-1 border border-gray-300 rounded">
+                        <label class="col-span-2 flex items-center space-x-1">
+                            <input type="checkbox" data-file="${fileObj.id}" data-field="support" class="w-3 h-3">
+                            <span>Support</span>
+                        </label>
+                        <input type="number" data-file="${fileObj.id}" data-field="quantity" placeholder="Qty" min="1" value="1" class="px-2 py-1 border border-gray-300 rounded">
+                        <select data-file="${fileObj.id}" data-field="post_processing" class="col-span-2 px-2 py-1 border border-gray-300 rounded text-xs">
+                            <option value="">Post-Processing: None</option>
+                            ${Object.entries(config.post_processing || {}).map(([key, pp]) =>
+                                `<option value="${key}">${pp.name}</option>`
+                            ).join('')}
+                        </select>
+                    </div>
+                </div>
+            `;
+        }
+
+        container.appendChild(div);
+    });
+}
+
+function updateCalculateButton() {
+    const btn = document.getElementById('calculateBtn');
+    const btnText = document.getElementById('btnText');
+    const hasFiles = uploadedFiles.length > 0;
+    const useGlobal = document.getElementById('useGlobalSettings').checked;
+
+    if (!hasFiles) {
+        btn.disabled = true;
+        btnText.textContent = 'Upload STL files to calculate';
+        return;
+    }
+
+    if (useGlobal) {
+        const hasPrinter = document.getElementById('printer').value !== '';
+        const hasMaterial = document.getElementById('material').value !== '';
+        const hasQuality = document.getElementById('quality').value !== '';
+        console.log(hasPrinter, hasMaterial, hasQuality)
+        if (hasPrinter && hasMaterial && hasQuality) {
+            btn.disabled = false;
+            btnText.textContent = `Process ${uploadedFiles.length} file(s)`;
+        } else {
+            btn.disabled = true;
+            btnText.textContent = 'Configure global settings';
+        }
+    } else {
+        btn.disabled = false;
+        btnText.textContent = `Process ${uploadedFiles.length} file(s)`;
+    }
+}
+
+async function processBatch() {
+    const useGlobal = document.getElementById('useGlobalSettings').checked;
+
+    // Prepare batch data
+    const batch = uploadedFiles.map(fileObj => {
+        if (useGlobal) {
+            const postProcessingValue = document.getElementById('postProcessing').value;
+            return {
+                file: fileObj.file,
+                printer: document.getElementById('printer').value,
+                material: document.getElementById('material').value,
+                quality: document.getElementById('quality').value,
+                infill_density: parseInt(document.getElementById('infill').value),
+                support: document.getElementById('support').checked,
+                quantity: parseInt(document.getElementById('quantity').value),
+                post_processing: postProcessingValue ? [postProcessingValue] : []
+            };
+        } else {
+            // Get individual settings
+            const printer = document.querySelector(`[data-file="${fileObj.id}"][data-field="printer"]`).value;
+            const material = document.querySelector(`[data-file="${fileObj.id}"][data-field="material"]`).value;
+            const quality = document.querySelector(`[data-file="${fileObj.id}"][data-field="quality"]`).value;
+            const infill = parseInt(document.querySelector(`[data-file="${fileObj.id}"][data-field="infill"]`).value || 20);
+            const support = document.querySelector(`[data-file="${fileObj.id}"][data-field="support"]`).checked;
+            const quantity = parseInt(document.querySelector(`[data-file="${fileObj.id}"][data-field="quantity"]`).value || 1);
+
+            const postProcessing = document.querySelector(`[data-file="${fileObj.id}"][data-field="post_processing"]`)?.value || '';
+
+            return {
+                file: fileObj.file,
+                printer: printer || 'prusa_mk3s',
+                material: material || 'pla',
+                quality: quality || 'standard',
+                infill_density: infill,
+                support: support,
+                quantity: quantity,
+                post_processing: postProcessing ? [postProcessing] : []
+            };
+        }
+    });
+
+    // Show queue status
+    document.getElementById('queueStatus').classList.remove('hidden');
+    document.getElementById('queueCount').textContent = batch.length;
+    document.getElementById('queueProgress').textContent = `0/${batch.length}`;
+    document.getElementById('fileResultsContainer').innerHTML = '';
+    document.getElementById('combinedTotal').classList.add('hidden');
+
+    showCalculating();
+
+    let results = [];
+    let totalBeforeTax = 0;
+    let totalWeight = 0;
+    let totalTime = 0;
+
+    // Process files ONE BY ONE (sequential, not parallel)
+    for (let i = 0; i < batch.length; i++) {
+        const item = batch[i];
+
+        // Update queue status
+        document.getElementById('currentFile').textContent = item.file.name;
+        document.getElementById('queueProgress').textContent = `${i + 1}/${batch.length}`;
+        document.getElementById('queueProgressBar').style.width = `${((i + 1) / batch.length) * 100}%`;
+
+        try {
+            // Step 1: Slice the file
+            const formData = new FormData();
+            formData.append('file', item.file);
+            formData.append('printer', item.printer);
+            formData.append('material', item.material);
+            formData.append('quality', item.quality);
+            formData.append('infill_density', item.infill_density);
+            formData.append('support', item.support);
+
+            const sliceResponse = await fetch('/api/slice', {
+                method: 'POST',
+                body: formData
+            });
+
+            const sliceData = await sliceResponse.json();
+
+            if (!sliceData.success) {
+                throw new Error(sliceData.error || 'Slicing failed');
+            }
+
+            // Step 2: Calculate quote
+            const quoteResponse = await fetch('/api/calculate-quote', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    printer: item.printer,
+                    material: item.material,
+                    quality: item.quality,
+                    infill_density: item.infill_density,
+                    quantity: item.quantity,
+                    filament_weight_g: sliceData.data.filament_weight_g,
+                    print_time_hours: sliceData.data.estimated_time_hours,
+                    post_processing: item.post_processing || []
+                })
+            });
+
+            const quoteData = await quoteResponse.json();
+
+            if (!quoteData.success) {
+                throw new Error(quoteData.error || 'Quote calculation failed');
+            }
+
+            // Store result
+            const result = {
+                filename: item.file.name,
+                sliceData: sliceData.data,
+                quote: quoteData.quote,
+                settings: item
+            };
+            results.push(result);
+
+            // Update totals
+            totalBeforeTax += quoteData.quote.breakdown.total_before_tax;
+            totalWeight += sliceData.data.filament_weight_g;
+            totalTime += sliceData.data.estimated_time_hours;
+
+            // Display individual result
+            displayFileResult(result);
+
+        } catch (error) {
+            // Display error for this file
+            displayFileError(item.file.name, error.message);
+        }
+    }
+
+    // Hide queue status
+    document.getElementById('queueStatus').classList.add('hidden');
+    hideCalculating();
+
+    // Display combined total
+    if (results.length > 0) {
+        displayCombinedTotal(results.length, totalWeight, totalTime, totalBeforeTax);
+    }
+}
+
+function displayFileResult(result) {
+    const container = document.getElementById('fileResultsContainer');
+    const div = document.createElement('div');
+    div.className = 'bg-white rounded-lg shadow-sm border-l-4 border-l-[#ff5733] border-t border-r border-b border-gray-200 p-4 hover:shadow-md transition-shadow';
+
+    const b = result.quote.breakdown;
+
+    div.innerHTML = `
+        <div class="flex justify-between items-start mb-3">
+            <div class="flex items-center space-x-2">
+                <svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                </svg>
+                <h4 class="text-sm font-semibold text-gray-900">${result.filename}</h4>
+            </div>
+            <span class="text-lg font-bold text-[#ff5733]">₹${b.total_price}</span>
+        </div>
+        <div class="grid grid-cols-2 gap-2 text-xs text-gray-600">
+            <div class="flex justify-between bg-gray-50 px-2 py-1 rounded">
+                <span class="font-medium">Weight:</span>
+                <span>${result.sliceData.filament_weight_g}g</span>
+            </div>
+            <div class="flex justify-between bg-gray-50 px-2 py-1 rounded">
+                <span class="font-medium">Time:</span>
+                <span>${result.sliceData.estimated_time_hours}h</span>
+            </div>
+            <div class="flex justify-between bg-gray-50 px-2 py-1 rounded">
+                <span class="font-medium">Quantity:</span>
+                <span>${b.quantity}x</span>
+            </div>
+            <div class="flex justify-between bg-gray-50 px-2 py-1 rounded">
+                <span class="font-medium">Material:</span>
+                <span>${result.quote.print_details.material_name}</span>
+            </div>
+        </div>
+    `;
+
+    container.appendChild(div);
+}
+
+function displayFileError(filename, error) {
+    const container = document.getElementById('fileResultsContainer');
+    const div = document.createElement('div');
+    div.className = 'bg-red-50 rounded-lg border border-red-200 p-4';
+
+    div.innerHTML = `
+        <div class="flex items-start">
+            <svg class="w-5 h-5 text-red-600 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+            </svg>
+            <div class="ml-3">
+                <h4 class="text-sm font-medium text-red-800">${filename}</h4>
+                <p class="text-xs text-red-700 mt-1">${error}</p>
+            </div>
+        </div>
+    `;
+
+    container.appendChild(div);
+}
+
+function displayCombinedTotal(fileCount, totalWeight, totalTime, totalBeforeTax) {
+    const gstRate = config.pricing?.gst_rate || 0.18;
+    const gstAmount = totalBeforeTax * gstRate;
+    const grandTotal = totalBeforeTax + gstAmount;
+
+    document.getElementById('totalFiles').textContent = fileCount;
+    document.getElementById('totalWeight').textContent = totalWeight.toFixed(2) + 'g';
+    document.getElementById('totalTime').textContent = totalTime.toFixed(2) + 'h';
+    document.getElementById('combinedBeforeTax').textContent = '₹' + totalBeforeTax.toFixed(2);
+    document.getElementById('combinedGstRate').textContent = (gstRate * 100).toFixed(0);
+    document.getElementById('combinedGstAmount').textContent = '₹' + gstAmount.toFixed(2);
+    document.getElementById('grandTotal').textContent = '₹' + grandTotal.toFixed(2);
+
+    document.getElementById('combinedTotal').classList.remove('hidden');
+}
+
+function showCalculating() {
+    document.getElementById('btnText').classList.add('hidden');
+    document.getElementById('btnSpinner').classList.remove('hidden');
+    document.getElementById('calculateBtn').disabled = true;
+}
+
+function hideCalculating() {
+    document.getElementById('btnText').classList.remove('hidden');
+    document.getElementById('btnSpinner').classList.add('hidden');
+    document.getElementById('calculateBtn').disabled = false;
+}
+
+function showError(message) {
+    const errorDiv = document.getElementById('errorMessage');
+    document.getElementById('errorText').textContent = message;
+    errorDiv.classList.remove('hidden');
+    setTimeout(() => errorDiv.classList.add('hidden'), 5000);
+}
+</script>
+{% endblock %}

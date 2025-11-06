@@ -1,0 +1,1456 @@
+{% extends 'base.html' %}
+
+{% block title %}ManufactureNow - 3D Printing Made Easy{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='3dquote.css') }}">
+<style>
+    /* Modal styles (existing styles remain) */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-content {
+        background-color: #fefefe;
+        margin: 5% auto;
+        padding: 20px;
+        border: none;
+        border-radius: 12px;
+        width: 90%;
+        max-width: 500px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid #eee;
+    }
+
+    .modal-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #333;
+    }
+
+    .close {
+        font-size: 24px;
+        font-weight: bold;
+        cursor: pointer;
+        color: #aaa;
+        border: none;
+        background: none;
+    }
+
+    .close:hover {
+        color: #333;
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 600;
+        color: #333;
+    }
+
+    .form-group input,
+    .form-group textarea {
+        width: 100%;
+        padding: 10px;
+        border: 2px solid #ddd;
+        border-radius: 8px;
+        font-size: 14px;
+        transition: border-color 0.3s;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus {
+        outline: none;
+        border-color: #4CAF50;
+    }
+
+    .form-group textarea {
+        height: 80px;
+        resize: vertical;
+    }
+
+    .required {
+        color: #e74c3c;
+    }
+
+    .place-order-btn {
+        background: linear-gradient(135deg, #4CAF50, #45a049);
+        color: white;
+        padding: 15px 30px;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        width: 100%;
+        margin-top: 20px;
+        transition: all 0.3s;
+    }
+
+    .place-order-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
+    }
+
+    .place-order-btn:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+
+    .modal-buttons {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+    }
+
+    .modal-btn {
+        flex: 1;
+        padding: 12px 20px;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+    .modal-btn-primary {
+        background: linear-gradient(135deg, #4CAF50, #45a049);
+        color: white;
+    }
+
+    .modal-btn-primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 3px 10px rgba(76, 175, 80, 0.3);
+    }
+
+    .modal-btn-secondary {
+        background: #f8f9fa;
+        color: #333;
+        border: 2px solid #ddd;
+    }
+
+    .modal-btn-secondary:hover {
+        background: #e9ecef;
+    }
+
+    .error-text {
+        color: #e74c3c;
+        font-size: 12px;
+        margin-top: 5px;
+    }
+
+    .upload-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        border: 2px dashed #ccc;
+        padding: 20px;
+        margin: 20px;
+        height: 200px;
+        box-sizing: border-box;
+    }
+
+    .file-input {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        cursor: pointer;
+        z-index: 10;
+    }
+
+    .upload-container svg {
+        margin-bottom: 10px;
+        z-index: 5;
+    }
+
+    .upload-container p {
+        margin: 5px 0;
+        z-index: 5;
+    }
+
+    .upload-container small {
+        font-size: 0.8em;
+        color: #666;
+    }
+
+    .selected-files {
+        margin-top: 10px;
+        font-size: 0.9em;
+        color: #333;
+    }
+
+    /* Styles for the 3D viewer container */
+    .model-viewer {
+        width: 100%;
+        height: 200px;
+        /* Set a fixed height or use responsive units */
+        background-color: #f0f0f0;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        margin-top: 15px;
+        overflow: hidden;
+        /* Important for canvas rendering */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    /* Styles for the Three.js canvas within the viewer */
+    .model-viewer canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+    }
+
+    /* Part card container */
+    .part-card {
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        background: white;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Header remains full width */
+    .part-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px 20px;
+        border-bottom: 1px solid #eee;
+        background-color: #f8f9fa;
+    }
+
+    .part-name {
+        font-weight: bold;
+        font-size: 1.1em;
+    }
+
+    .part-cost {
+        font-weight: bold;
+        font-size: 1.2em;
+        color: #2c3e50;
+    }
+
+    /* Main content area - side by side */
+    .part-content {
+        display: flex;
+        min-height: 300px;
+    }
+
+    /* Left side - 3D viewer */
+    .part-viewer {
+        flex: 1;
+        min-width: 0;
+        border-right: 1px solid #eee;
+        max-width: 40%;
+        margin-top: 1%;
+    }
+
+    .model-viewer {
+        width: 100%;
+        height: 400px;
+        background-color: #f5f5f5;
+        border-radius: 4px;
+    }
+
+    /* Right side - part information */
+    .part-info {
+        flex: 1;
+        min-width: 0;
+        /* Allows flex item to shrink below its content size */
+        padding: 20px;
+    }
+
+    .part-details {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        padding: 2px;
+    }
+
+    .part-detail {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 12px;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .part-detail:last-child {
+        border-bottom: none;
+    }
+
+    .detail-label {
+        font-size: 18px;
+        font-weight: 500;
+        color: #666;
+        flex: 1;
+    }
+
+    .detail-value {
+        font-weight: bold;
+        color: #2c3e50;
+        text-align: right;
+        font-size: 20px;
+    }
+
+    .error-text {
+        color: #e74c3c;
+        text-align: center;
+        font-style: italic;
+        margin: 20px 0;
+    }
+
+    /* Responsive design for smaller screens */
+    @media (max-width: 768px) {
+        .part-content {
+            flex-direction: column;
+        }
+
+        .part-viewer {
+            border-right: none;
+            border-bottom: 1px solid #eee;
+        }
+
+        .model-viewer {
+            height: 250px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+
+    <div class="upload-container" id="uploadContainer">
+        <input type="file" id="stlFiles" class="file-input" accept=".stl, .step" multiple />
+        <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="17 8 12 3 7 8" />
+            <line x1="12" y1="3" x2="12" y2="15" />
+        </svg>
+        <p>Drag and drop your STL files here or click to browse</p>
+        <p><small>You can select multiple files at once</small></p>
+    </div>
+    <div class="selected-files" id="selectedFiles"></div>
+    <div class="parameters-container">
+        <div class="parameter-group">
+            <label for="material">Material</label>
+            <div class="custom-select-wrapper">
+                <select id="material" class="custom-select">
+                    <option value="pla">PLA</option>
+                    <option value="abs">ABS</option>
+                    <option value="petg">PETG</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="parameter-group">
+            <label for="quality">Print Quality</label>
+            <div class="custom-select-wrapper">
+                <select id="quality" class="custom-select">
+                    <option value="0.3">Draft (0.3mm)</option>
+                    <option value="0.2" selected>Standard (0.2mm)</option>
+                    <option value="0.15">High (0.15mm)</option>
+                    <option value="0.1">Ultra (0.1mm)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="parameter-group">
+            <label for="infillDensity">Infill Percentage</label>
+            <div class="range-input">
+                <input type="range" id="infillDensity" min="5" max="100" step="1" value="20">
+                <div class="text-input">
+                    <input type="number" id="infillDensityText" min="5" max="100" step="1" value="20">
+                    <span class="percent-symbol">%</span>
+                </div>
+
+                <script>
+                    const slider = document.getElementById('infillDensity');
+                    const textInput = document.getElementById('infillDensityText');
+
+                    function updateValue(value) {
+                        // Ensure value is within bounds
+                        value = Math.max(5, Math.min(100, parseInt(value) || 5));
+
+                        slider.value = value;
+                        textInput.value = value;
+                    }
+
+                    // Handle slider input
+                    slider.addEventListener('input', function () {
+                        updateValue(this.value);
+                    });
+
+                    // Handle text input - only update if value is valid
+                    textInput.addEventListener('input', function () {
+                        const value = parseInt(this.value);
+                        if (!isNaN(value) && value >= 5 && value <= 100) {
+                            slider.value = value;
+                        }
+                    });
+
+                    // Handle text input blur to ensure valid value
+                    textInput.addEventListener('blur', function () {
+                        if (this.value === '' || this.value < 5) {
+                            updateValue(5);
+                        } else if (this.value > 100) {
+                            updateValue(100);
+                        } else {
+                            // Ensure display is updated even if value was already valid
+                            updateValue(this.value);
+                        }
+                    });
+
+                    // Handle Enter key in text input
+                    textInput.addEventListener('keypress', function (e) {
+                        if (e.key === 'Enter') {
+                            this.blur();
+                        }
+                    });
+                </script>
+            </div>
+        </div>
+
+        <div class="parameter-group">
+            <label for="color">Color</label>
+            <div class="custom-select-wrapper">
+                <select id="color" class="custom-select" required>
+                </select>
+                <script>
+                    const materialColors = {
+                        pla: [
+                            { value: 'white', text: 'White' },
+                            { value: 'black', text: 'Black' },
+                            { value: 'red', text: 'Red' },
+                            { value: 'blue', text: 'Blue' },
+                            { value: 'green', text: 'Green' },
+                            { value: 'yellow', text: 'Yellow' },
+                            { value: 'orange', text: 'Orange' },
+                            { value: 'purple', text: 'Purple' }
+                        ],
+                        abs: [
+                            { value: 'white', text: 'White' },
+                            { value: 'black', text: 'Black' },
+                            { value: 'gray', text: 'Gray' }
+                        ],
+                        petg: [
+                            { value: 'white', text: 'White' },
+                            { value: 'black', text: 'Black' },
+                            { value: 'gray', text: 'Gray' }
+                        ],
+                        asa: [
+                            { value: 'white', text: 'White' },
+                            { value: 'black', text: 'Black' }
+                        ]
+                    };
+
+                    const materialSelect = document.getElementById('material');
+                    const colorSelect = document.getElementById('color');
+
+                    function updateColorOptions(material) {
+                        colorSelect.innerHTML = ""
+                        if (materialColors[material]) {
+                            materialColors[material].forEach(color => {
+                                const option = document.createElement('option');
+                                option.value = color.value;
+                                option.textContent = color.text;
+                                colorSelect.appendChild(option);
+                            });
+                        }
+                    }
+
+                    materialSelect.addEventListener('change', function () {
+                        updateColorOptions(this.value);
+                    });
+
+                    // Initial population based on default material
+                    updateColorOptions(materialSelect.value);
+                </script>
+            </div>
+        </div>
+
+
+        <div class="parameter-group">
+            <label for="quantity">Quantity of Each Part</label>
+            <input type="number" id="quantity" min="1" value="1">
+        </div>
+
+
+        <div class="parameter-group">
+            <div class="checkbox-wrapper">
+                <input type="checkbox" id="absSmoothing" class="abs-smoothing-checkbox">
+                <label for="absSmoothing" class="checkbox-label">Enable ABS Vapor Smoothing</label>
+            </div>
+            <small class="parameter-note">Only available for ABS material. Provides ultra-smooth finish.</small>
+        </div>
+
+    </div>
+    <!-- <p style="text-align: center; font-weight: bold; font-size: 26px;">Have query in quote? Mail us: <span
+            style="text-decoration: underline;">contact@manufacturenow.in</span></p> -->
+    <button id="calculateButton" disabled>Calculate Quotation</button>
+
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <p>Processing your models... This may take a few moments.</p>
+    </div>
+
+    <div class="error-message" id="errorMessage"></div>
+
+    <div class="results-container" id="resultsContainer">
+        <div class="results-header">Quotation Summary</div>
+
+        <div class="parts-container" id="partsContainer">
+            <!-- Part cards with 3D models will be added here dynamically -->
+        </div>
+
+        <div class="price-summary">
+            <div class="subtotal-price">
+                <span>Subtotal:</span>
+                <span id="subtotalCost">₹0.00</span>
+            </div>
+            <div class="abs-smoothing-price">
+                <span>ABS Smoothing Finish:</span>
+                <span id="absSmoothingCost">₹5,000.00</span>
+            </div>
+            <div class="gst-price">
+                <span>GST (18%):</span>
+                <span id="gstCost">₹0.00</span>
+            </div>
+            <div class="total-price">
+                <span>Total:</span>
+                <span id="totalCost">₹0.00</span>
+            </div>
+        </div>
+
+        <button class="place-order-btn" id="placeOrderBtn">
+            Place Order & Pay
+        </button>
+    </div>
+</div>
+
+<!-- Order Details Modal -->
+<div id="orderModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">Order Details</h2>
+            <button class="close" id="closeModal">&times;</button>
+        </div>
+
+        <form id="orderForm">
+            <div class="form-group">
+                <label for="customerName">Full Name <span class="required">*</span></label>
+                <input type="text" id="customerName" name="name" required>
+                <div class="error-text" id="nameError"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="customerEmail">Email Address <span class="required">*</span></label>
+                <input type="email" id="customerEmail" name="email" required>
+                <div class="error-text" id="emailError"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="customerPhone">Phone Number <span class="required">*</span></label>
+                <input type="tel" id="customerPhone" name="phone" required>
+                <div class="error-text" id="phoneError"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="customerAddress">Delivery Address <span class="required">*</span></label>
+                <textarea id="customerAddress" name="address" required
+                    placeholder="Enter your complete address including pincode"></textarea>
+                <div class="error-text" id="addressError"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="extraInstructions">Extra Instructions (Optional)</label>
+                <textarea id="extraInstructions" name="instructions"
+                    placeholder="Any special requirements or notes..."></textarea>
+            </div>
+
+            <div class="modal-buttons">
+                <button type="button" class="modal-btn modal-btn-secondary" id="cancelOrder">Cancel</button>
+                <button type="submit" class="modal-btn modal-btn-primary" id="confirmOrder">
+                    Confirm Order & Pay
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Include Three.js library and STLLoader -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/STLLoader.js"></script>
+
+<script>
+    const absSmothingCheckbox = document.getElementById('absSmoothing');
+
+    function updateAbsSmoothing() {
+        const material = materialSelect.value;
+        const isABS = material === 'abs';
+
+        absSmothingCheckbox.disabled = !isABS;
+        absSmothingCheckbox.parentElement.style.opacity = isABS ? '1' : '0.5';
+
+        if (!isABS) {
+            absSmothingCheckbox.checked = false;
+        }
+    }
+
+    materialSelect.addEventListener('change', function () {
+        updateColorOptions(this.value);
+        updateAbsSmoothing();
+    });
+
+    // Initial setup
+    updateAbsSmoothing();
+
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const uploadContainer = document.getElementById('uploadContainer');
+        const fileInput = document.getElementById('stlFiles');
+        const selectedFilesDiv = document.getElementById('selectedFiles');
+        const calculateButton = document.getElementById('calculateButton');
+        const loadingDiv = document.getElementById('loading');
+        const errorMessageDiv = document.getElementById('errorMessage');
+        const resultsContainer = document.getElementById('resultsContainer');
+        const partsContainer = document.getElementById('partsContainer');
+        const subtotalCostDiv = document.getElementById('subtotalCost');
+        const gstCostDiv = document.getElementById('gstCost');
+        const totalCostDiv = document.getElementById('totalCost');
+        const quantityInput = document.getElementById('quantity');
+        const placeOrderBtn = document.getElementById('placeOrderBtn');
+        const orderModal = document.getElementById('orderModal');
+        const closeModal = document.getElementById('closeModal');
+        const cancelOrder = document.getElementById('cancelOrder');
+        const orderForm = document.getElementById('orderForm');
+
+        // Material prices per kg
+        const materialPrices = {
+            'pla': 800,
+            'abs': 1000,
+            'petg': 1000,
+            'asa': 900
+        };
+
+        // Density of materials in g/cm³
+        const materialDensity = {
+            'pla': 1.24,
+            'abs': 1.04,
+            'petg': 1.27,
+            'asa': 1.21
+        };
+
+        // Keep track of uploaded files and current total
+        let uploadedFiles = [];
+        let currentTotal = 0;
+
+        // Map to store 3D viewer instances for cleanup
+        const modelViewers = new Map(); // Stores {fileName: {renderer, animate, onWindowResize}}
+
+        // Color mapping for Three.js material
+        const webColors = {
+            'black': 0x000000,
+            'white': 0xffffff,
+            'red': 0xff0000,
+            'blue': 0x0000ff,
+            'green': 0x00ff00,
+            'yellow': 0xffff00,
+            'orange': 0xffa500,
+            'purple': 0x800080,
+            'custom': 0x808080 // Default to grey for custom
+        };
+
+        // Range input handling
+        const rangeInputs = document.querySelectorAll('input[type="range"]');
+
+        // All input changes - recalculate if results are already shown
+        const allInputs = document.querySelectorAll('select, input');
+        allInputs.forEach(input => {
+            input.addEventListener('change', function () {
+                if (resultsContainer.style.display === 'block' && uploadedFiles.length > 0) {
+
+                }
+            });
+        });
+
+        // Modal handling
+        placeOrderBtn.addEventListener('click', function () {
+            orderModal.style.display = 'block';
+        });
+
+        closeModal.addEventListener('click', function () {
+            orderModal.style.display = 'none';
+        });
+
+        cancelOrder.addEventListener('click', function () {
+            orderModal.style.display = 'none';
+        });
+
+        window.addEventListener('click', function (event) {
+            if (event.target === orderModal) {
+                orderModal.style.display = 'none';
+            }
+        });
+
+        // Form validation
+        function validateForm() {
+            const name = document.getElementById('customerName').value.trim();
+            const email = document.getElementById('customerEmail').value.trim();
+            const phone = document.getElementById('customerPhone').value.trim();
+            const address = document.getElementById('customerAddress').value.trim();
+
+            let isValid = true;
+
+            // Clear previous errors
+            document.querySelectorAll('.error-text').forEach(el => el.textContent = '');
+
+            // Name validation
+            if (!name) {
+                document.getElementById('nameError').textContent = 'Name is required';
+                isValid = false;
+            }
+
+            // Email validation
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!email) {
+                document.getElementById('emailError').textContent = 'Email is required';
+                isValid = false;
+            } else if (!emailRegex.test(email)) {
+                document.getElementById('emailError').textContent = 'Please enter a valid email';
+                isValid = false;
+            }
+
+            // Phone validation
+            const phoneRegex = /^[6-9]\d{9}$/;
+            if (!phone) {
+                document.getElementById('phoneError').textContent = 'Phone number is required';
+                isValid = false;
+            } else if (!phoneRegex.test(phone)) {
+                document.getElementById('phoneError').textContent = 'Please enter a valid 10-digit phone number';
+                isValid = false;
+            }
+
+            // Address validation
+            if (!address) {
+                document.getElementById('addressError').textContent = 'Address is required';
+                isValid = false;
+            }
+
+            return isValid;
+        }
+
+        // Order form submission
+        orderForm.addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            if (!validateForm()) {
+                return;
+            }
+
+            const confirmBtn = document.getElementById('confirmOrder');
+            confirmBtn.disabled = true;
+            confirmBtn.textContent = 'Processing...';
+
+            try {
+                // Prepare form data
+                const formData = new FormData();
+
+                // Add STL files
+                uploadedFiles.forEach((file, index) => {
+                    formData.append('stl_files', file);
+                });
+
+                // Add order details
+                formData.append('name', document.getElementById('customerName').value.trim());
+                formData.append('email', document.getElementById('customerEmail').value.trim());
+                formData.append('phone', document.getElementById('customerPhone').value.trim());
+                formData.append('address', document.getElementById('customerAddress').value.trim());
+                formData.append('instructions', document.getElementById('extraInstructions').value.trim());
+
+                // Add printing parameters
+                formData.append('material', document.getElementById('material').value);
+                formData.append('quality', document.getElementById('quality').value);
+                formData.append('infill_density', document.getElementById('infillDensity').value);
+                formData.append('color', document.getElementById('color').value);
+                formData.append('quantity', document.getElementById('quantity').value);
+
+                // Add amount
+                formData.append('amount', currentTotal);
+
+                // Send to backend
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.payment_url) {
+                    // Redirect to Cashfree payment page
+                    window.location.href = result.payment_url;
+                } else {
+                    // Use a message box for error, not alert()
+                    displayMessageBox('Error placing order: ' + (result.error || 'Failed to create order'));
+                    console.error('Order error:', error);
+                }
+
+            } catch (error) {
+                displayMessageBox('Error placing order: ' + error.message);
+                console.error('Order error:', error);
+            } finally {
+                confirmBtn.disabled = false;
+                confirmBtn.textContent = 'Confirm Order & Pay';
+            }
+        });
+
+        // Custom message box function instead of alert()
+        function displayMessageBox(message) {
+            const messageBox = document.createElement('div');
+            messageBox.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background-color: #fff;
+                padding: 20px;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                z-index: 1001;
+                text-align: center;
+                max-width: 300px;
+                font-family: sans-serif;
+            `;
+            messageBox.innerHTML = `
+                <p>${message}</p>
+                <button onclick="this.parentNode.remove()" style="
+                    background-color: #4CAF50;
+                    color: white;
+                    padding: 10px 20px;
+                    border: none;
+                    border-radius: 5px;
+                    cursor: pointer;
+                    margin-top: 15px;
+                ">OK</button>
+            `;
+            document.body.appendChild(messageBox);
+        }
+
+        // File upload handling
+        uploadContainer.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadContainer.classList.add('active');
+        });
+
+        uploadContainer.addEventListener('dragleave', () => {
+            uploadContainer.classList.remove('active');
+        });
+
+        uploadContainer.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadContainer.classList.remove('active');
+
+            if (e.dataTransfer.files.length) {
+                handleFileSelect(e.dataTransfer.files);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length) {
+                handleFileSelect(e.target.files);
+            }
+        });
+
+        function handleFileSelect(fileList) {
+            let validFiles = [];
+
+            for (let i = 0; i < fileList.length; i++) {
+                const file = fileList[i];
+                if (file.name.toLowerCase().endsWith('.stl')) {
+                    const fileExists = uploadedFiles.some(f => f.name === file.name);
+                    if (!fileExists) {
+                        validFiles.push(file);
+                    }
+                }
+            }
+
+            if (validFiles.length > 0) {
+                uploadedFiles = [...uploadedFiles, ...validFiles];
+                updateFileList();
+                calculateButton.disabled = uploadedFiles.length === 0;
+                errorMessageDiv.style.display = 'none';
+            } else {
+                if (fileList.length > 0 && uploadedFiles.length === 0) {
+                    errorMessageDiv.textContent = 'Please select valid STL files.';
+                    errorMessageDiv.style.display = 'block';
+                }
+            }
+        }
+
+        function updateFileList() {
+            selectedFilesDiv.innerHTML = '';
+
+            if (uploadedFiles.length > 0) {
+                selectedFilesDiv.style.display = 'block';
+
+                uploadedFiles.forEach((file, index) => {
+                    const fileItem = document.createElement('div');
+                    fileItem.className = 'file-item';
+
+                    const fileName = document.createElement('span');
+                    fileName.textContent = file.name;
+
+                    const removeBtn = document.createElement('button');
+                    removeBtn.className = 'remove-file';
+                    removeBtn.innerHTML = '&times;';
+                    removeBtn.title = 'Remove file';
+                    removeBtn.type = 'button'; // Explicitly set button type
+                    removeBtn.dataset.index = index;
+
+                    // Fixed event listener with proper event handling
+                    removeBtn.addEventListener('click', function (e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        e.stopImmediatePropagation(); // Also stop immediate propagation
+                        removeFile(parseInt(this.dataset.index));
+                        return false; // Extra safety
+                    });
+
+                    // Also prevent the file item itself from triggering upload
+                    fileItem.addEventListener('click', function (e) {
+                        e.stopPropagation();
+                    });
+
+                    fileItem.appendChild(fileName);
+                    fileItem.appendChild(removeBtn);
+                    selectedFilesDiv.appendChild(fileItem);
+                });
+            } else {
+                selectedFilesDiv.style.display = 'none';
+            }
+        }
+
+        function removeFile(index) {
+            const fileToRemove = uploadedFiles[index];
+            if (fileToRemove) {
+                // Clean up Three.js viewer related to this file
+                const viewerCleanup = modelViewers.get(fileToRemove.name);
+                if (viewerCleanup) {
+                    // Stop animation loop
+                    if (viewerCleanup.animationFrameId) {
+                        cancelAnimationFrame(viewerCleanup.animationFrameId);
+                    }
+                    // Dispose of renderer and remove canvas
+                    if (viewerCleanup.renderer && viewerCleanup.renderer.domElement) {
+                        viewerCleanup.renderer.dispose();
+                        viewerCleanup.renderer.domElement.remove();
+                    }
+                    // Remove resize listener
+                    if (viewerCleanup.resizeHandler) {
+                        window.removeEventListener('resize', viewerCleanup.resizeHandler);
+                    }
+                    // Revoke the object URL to free up memory
+                    if (viewerCleanup.stlObjectURL) {
+                        URL.revokeObjectURL(viewerCleanup.stlObjectURL);
+                    }
+                    modelViewers.delete(fileToRemove.name);
+                }
+            }
+
+            uploadedFiles.splice(index, 1);
+            updateFileList();
+            calculateButton.disabled = uploadedFiles.length === 0;
+
+            if (uploadedFiles.length === 0) {
+                resultsContainer.style.display = 'none';
+            } else if (resultsContainer.style.display === 'block') {
+                // Recalculate if results are already displayed
+
+            }
+        }
+
+        // Calculate 3D print cost for a single part
+        function calculate3DPrintCost(objectWeightGrams, material, timeHours) {
+            const materialCost = (objectWeightGrams / 1000) * materialPrices[material];
+            const electricityTariff = 7;
+            const printerPowerWatts = 1000;
+
+            const electricityCost = (printerPowerWatts / 1000) * timeHours * electricityTariff;
+            const depreciationCost = 50 * timeHours;
+            const otherCosts = 20;
+
+
+            const baseCost = materialCost + electricityCost + depreciationCost + otherCosts + 150;
+            return {
+                baseCost: parseFloat(baseCost.toFixed(2)),
+                printTimeHours: parseFloat(timeHours.toFixed(2))
+            };
+        }
+
+        // Process a single STL file
+        async function processStlFile(file, index) {
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('layer_height', document.getElementById('quality').value);
+                formData.append('material', document.getElementById('material').value);
+                formData.append('infill_density', document.getElementById('infillDensity').value);
+                formData.append('bed_temp', 60);
+                formData.append('extruder_temp', 200);
+                formData.append('perimeter_speed', 60);
+                formData.append('infill_speed', 60);
+                formData.append('solid_infill_speed', 60);
+                formData.append('support', false);
+
+                const response = await fetch('/api/slice', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.filament_usage) {
+                    const mmMatch = data.filament_usage.match(/; filament used \[mm\] = ([\d.]+)/);
+                    const cm3Match = data.filament_usage.match(/; filament used \[cm3\] = ([\d.]+)/);
+                    let timeHere = data.filament_usage.match(/; estimated printing time \(normal mode\) = (.+)/);
+
+                    let filamentLength = 0;
+                    let filamentVolume = 0;
+
+                    if (mmMatch && mmMatch[1]) {
+                        filamentLength = parseFloat(mmMatch[1]);
+                    }
+
+                    if (cm3Match && cm3Match[1]) {
+                        filamentVolume = parseFloat(cm3Match[1]);
+                    }
+
+                    const material = document.getElementById('material').value;
+                    const filamentWeight = filamentVolume * materialDensity[material];
+                    const stlObjectURL = URL.createObjectURL(file); // Create object URL for 3D model
+
+                    return {
+                        success: true,
+                        fileIndex: index,
+                        fileName: file.name,
+                        filamentLength: filamentLength,
+                        filamentVolume: filamentVolume,
+                        filamentWeight: filamentWeight,
+                        material: material,
+                        stlObjectURL: stlObjectURL,
+                        timeHours: timeHere
+                    };
+                } else {
+                    return {
+                        success: false,
+                        fileIndex: index,
+                        fileName: file.name,
+                        error: data.error || 'Failed to process file'
+                    };
+                }
+            } catch (error) {
+                return {
+                    success: false,
+                    fileIndex: index,
+                    fileName: file.name,
+                    error: error.message || 'An unexpected error occurred'
+                };
+            }
+        }
+
+        // Initialize and render a 3D model in a given container
+        // Replace the initThreeDViewer function in your existing code with this fixed version:
+
+        function initThreeDViewer(containerId, stlObjectURL, modelColor) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+
+            container.innerHTML = ''; // Clear previous content
+
+            // Wait for container to be properly sized
+            setTimeout(() => {
+                // Check if container has dimensions
+                if (container.offsetWidth === 0 || container.offsetHeight === 0) {
+                    console.warn(`Container ${containerId} has no dimensions, retrying...`);
+                    // Retry after a short delay
+                    setTimeout(() => initThreeDViewer(containerId, stlObjectURL, modelColor), 100);
+                    return;
+                }
+
+                const scene = new THREE.Scene();
+                scene.background = new THREE.Color(0xf0f0f0); // Light grey background
+
+                const camera = new THREE.PerspectiveCamera(
+                    75,
+                    container.offsetWidth / container.offsetHeight,
+                    0.1,
+                    1000
+                );
+                camera.position.z = 50; // Initial camera position
+
+                const renderer = new THREE.WebGLRenderer({
+                    antialias: true,
+                    alpha: true
+                });
+                renderer.setSize(container.offsetWidth, container.offsetHeight);
+                renderer.setPixelRatio(window.devicePixelRatio);
+                container.appendChild(renderer.domElement);
+
+                // Add lights
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+                scene.add(ambientLight);
+                const directionalLight1 = new THREE.DirectionalLight(0xffffff, 0.8);
+                directionalLight1.position.set(1, 1, 1).normalize();
+                scene.add(directionalLight1);
+                const directionalLight2 = new THREE.DirectionalLight(0xffffff, 0.4);
+                directionalLight2.position.set(-1, -1, -1).normalize();
+                scene.add(directionalLight2);
+
+                let mesh = null;
+                let animationFrameId = null;
+                let isMouseDown = false;
+                let mouseX = 0, mouseY = 0;
+
+                const loader = new THREE.STLLoader();
+                loader.load(stlObjectURL, function (geometry) {
+                    const materialColor = webColors[modelColor] || webColors['black'];
+                    const material = new THREE.MeshPhongMaterial({
+                        color: materialColor,
+                        specular: 0x111111,
+                        shininess: 200
+                    });
+                    mesh = new THREE.Mesh(geometry, material);
+
+                    // Center the model and scale if necessary
+                    geometry.computeBoundingBox();
+                    const boundingBox = geometry.boundingBox;
+                    const center = new THREE.Vector3();
+                    boundingBox.getCenter(center);
+                    mesh.geometry.translate(-center.x, -center.y, -center.z);
+
+                    const size = new THREE.Vector3();
+                    boundingBox.getSize(size);
+                    const maxDim = Math.max(size.x, size.y, size.z);
+                    const scale = 30 / maxDim;
+                    mesh.scale.set(scale, scale, scale);
+
+                    scene.add(mesh);
+
+                    // Adjust camera to fit the scaled model
+                    camera.position.z = Math.max(size.x, size.y, size.z) * 1.5 * scale;
+                    camera.position.y = mesh.position.y;
+                    camera.lookAt(mesh.position);
+
+                    // Force initial render
+                    renderer.render(scene, camera);
+
+                    // Start animation loop
+                    startAnimation();
+
+                }, undefined, function (error) {
+                    console.error('An error occurred while loading the STL:', error);
+                    container.innerHTML = '<p style="color: red; text-align: center; padding: 20px;">Error loading 3D model.</p>';
+                });
+
+                // Mouse controls
+                renderer.domElement.addEventListener('mousedown', function (event) {
+                    isMouseDown = true;
+                    mouseX = event.clientX;
+                    mouseY = event.clientY;
+                    event.preventDefault();
+                });
+
+                renderer.domElement.addEventListener('mouseup', function (event) {
+                    isMouseDown = false;
+                    event.preventDefault();
+                });
+
+                renderer.domElement.addEventListener('mouseleave', function (event) {
+                    isMouseDown = false;
+                    event.preventDefault();
+                });
+
+                renderer.domElement.addEventListener('mousemove', function (event) {
+                    if (isMouseDown && mesh) {
+                        const deltaX = event.clientX - mouseX;
+                        const deltaY = event.clientY - mouseY;
+
+                        mesh.rotation.y += deltaX * 0.01;
+                        mesh.rotation.x += deltaY * 0.01;
+
+                        mouseX = event.clientX;
+                        mouseY = event.clientY;
+                    }
+                });
+
+                // Zoom with mouse wheel
+                renderer.domElement.addEventListener('wheel', function (event) {
+                    event.preventDefault();
+                    camera.position.z += event.deltaY * 0.1;
+                    camera.position.z = Math.max(5, Math.min(200, camera.position.z));
+                });
+
+                // Animation function
+                function startAnimation() {
+                    const animate = function () {
+                        animationFrameId = requestAnimationFrame(animate);
+
+                        // Auto-rotate the model slowly (if no manual interaction)
+                        if (!isMouseDown && mesh) {
+                            mesh.rotation.x += 0.005;
+                            mesh.rotation.y += 0.005;
+                        }
+                        renderer.render(scene, camera);
+                    };
+                    animate();
+                }
+
+                // Handle window resize for this specific viewer
+                const onWindowResize = () => {
+                    if (container.offsetWidth > 0 && container.offsetHeight > 0) {
+                        camera.aspect = container.offsetWidth / container.offsetHeight;
+                        camera.updateProjectionMatrix();
+                        renderer.setSize(container.offsetWidth, container.offsetHeight);
+                        renderer.render(scene, camera); // Force render after resize
+                    }
+                };
+                window.addEventListener('resize', onWindowResize, false);
+
+                // Store the viewer instance for cleanup
+                modelViewers.set(containerId, {
+                    renderer,
+                    animationFrameId,
+                    resizeHandler: onWindowResize,
+                    stlObjectURL
+                });
+
+                // Force initial render after everything is set up
+                requestAnimationFrame(() => {
+                    if (renderer && scene && camera) {
+                        renderer.render(scene, camera);
+                    }
+                });
+
+            }, 50); // Small delay to ensure DOM is ready
+        }
+
+
+        // Process all uploaded STL files
+        calculateButton.addEventListener('click', async function () {
+            loadingDiv.style.display = 'block';
+            errorMessageDiv.style.display = 'none';
+            resultsContainer.style.display = 'none';
+            calculateButton.disabled = true;
+
+            const quantity = parseInt(quantityInput.value) || 1;
+            const material = document.getElementById('material').value;
+            const color = document.getElementById('color').value; // Get selected color
+            const quality = document.getElementById('quality').value;
+            const infillDensity = document.getElementById('infillDensity').value;
+
+            // Clear existing model viewers and their canvases
+            // Iterate over a copy of the map keys to avoid issues during deletion
+            const currentViewerKeys = Array.from(modelViewers.keys());
+            currentViewerKeys.forEach(key => {
+                const viewerCleanup = modelViewers.get(key);
+                if (viewerCleanup) {
+                    if (viewerCleanup.animationFrameId) {
+                        cancelAnimationFrame(viewerCleanup.animationFrameId);
+                    }
+                    if (viewerCleanup.renderer && viewerCleanup.renderer.domElement) {
+                        viewerCleanup.renderer.dispose();
+                        viewerCleanup.renderer.domElement.remove();
+                    }
+                    if (viewerCleanup.resizeHandler) {
+                        window.removeEventListener('resize', viewerCleanup.resizeHandler);
+                    }
+                    if (viewerCleanup.stlObjectURL) {
+                        URL.revokeObjectURL(viewerCleanup.stlObjectURL);
+                    }
+                    modelViewers.delete(key);
+                }
+            });
+            partsContainer.innerHTML = ''; // Clear existing part cards
+
+            try {
+                const results = [];
+
+                // Process files one by one instead of all at once
+                for (let index = 0; index < uploadedFiles.length; index++) {
+                    const file = uploadedFiles[index];
+                    const result = await processStlFile(file, index);
+                    results.push(result);
+
+                    // Optional: Update loading message to show progress
+                    const loadingText = document.querySelector('#loading p');
+                    if (loadingText) {
+                        loadingText.textContent = `Processing file ${index + 1} of ${uploadedFiles.length}...`;
+                    }
+                }
+
+                const successfulResults = results.filter(result => result.success);
+
+                if (successfulResults.length > 0) {
+                    let subtotal = 0;
+
+                    results.forEach(result => {
+                        const partCard = document.createElement('div');
+                        partCard.className = 'part-card';
+
+                        if (result.success) {
+                            let timeForPrint = result.timeHours[1]
+                            let timeVals = timeForPrint.replace(/[dhms]/g, '').split(/\s+/).map(Number);
+                            if (timeVals == NaN) {
+                                timeVals = timeForPrint.replace(/[hms]/g, '').split(/\s+/).map(Number);
+                            }
+                            if (timeVals == NaN) {
+                                timeVals = timeForPrint.replace(/[ms]/g, '').split(/\s+/).map(Number);
+                            }
+                            let resultTime
+                            if (timeVals.length == 4) {
+                                resultTime = (timeVals[0] * 24 + timeVals[1] + timeVals[2] / 60 + timeVals[3] / 3600);
+                            }
+                            if (timeVals.length == 3) {
+                                resultTime = (timeVals[0] + timeVals[1] / 60 + timeVals[2] / 3600);
+                            }
+                            else {
+                                resultTime = (timeVals[0] / 60 + timeVals[1] / 3600);
+                            }
+                            const costInfo = calculate3DPrintCost(result.filamentWeight, material, resultTime);
+                            const partCost = costInfo.baseCost * quantity;
+                            subtotal += partCost;
+
+                            const viewerId = `model-viewer-${result.fileIndex}`; // Unique ID for each viewer
+
+                            partCard.innerHTML = `
+            <div class="part-header">
+                <div class="part-name">${result.fileName}</div>
+                <div class="part-cost">₹${partCost.toFixed(2)}</div>
+            </div>
+            <div class="part-content">
+                <div class="part-viewer">
+                    <div id="${viewerId}" class="model-viewer"></div>
+                </div>
+                <div class="part-info">
+                    <div class="part-details">
+                        <div class="part-detail">
+                            <span class="detail-label">Material</span>
+                            <span class="detail-value">${material.toUpperCase()}</span>
+                        </div>
+                        <div class="part-detail">
+                            <span class="detail-label">Color</span>
+                            <span class="detail-value">${color}</span>
+                        </div>
+                        <div class="part-detail">
+                            <span class="detail-label">Quality</span>
+                            <span class="detail-value">${quality}mm</span>
+                        </div>
+                        <div class="part-detail">
+                            <span class="detail-label">Infill</span>
+                            <span class="detail-value">${infillDensity}%</span>
+                        </div>
+                        <div class="part-detail">
+                            <span class="detail-label">Quantity</span>
+                            <span class="detail-value">${quantity}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+                            partsContainer.appendChild(partCard);
+
+                            // Initialize 3D viewer for this part after it's in the DOM
+                            initThreeDViewer(viewerId, result.stlObjectURL, color);
+
+                        } else {
+                            partCard.innerHTML = `
+            <div class="part-header">
+                <div class="part-name">${result.fileName}</div>
+                <div class="part-cost" style="color: red;">Error</div>
+            </div>
+            <div class="part-content">
+                <div class="part-viewer">
+                    <div class="model-viewer" style="background-color: #ffe0e0; color: #e74c3c; display: flex; align-items: center; justify-content: center;">
+                        Error loading model: ${result.error}
+                    </div>
+                </div>
+                <div class="part-info">
+                    <div class="part-details">
+                        <p class="error-text">Failed to process this file. Please ensure it's a valid STL.</p>
+                    </div>
+                </div>
+            </div>
+        `;
+                            partsContainer.appendChild(partCard);
+                            // Revoke object URL even if model failed to load in viewer
+                            if (result.stlObjectURL) {
+                                URL.revokeObjectURL(result.stlObjectURL);
+                            }
+                        }
+                    });
+                    let hasAbsSmoothing = document.getElementById('absSmoothing').checked;
+                    let absSmoothingDiv = document.querySelector('.abs-smoothing-price');
+                    if (!hasAbsSmoothing) {
+                        absSmoothingDiv.style.display = "none";
+                    }
+                    const absSmoothingCost = hasAbsSmoothing ? 5000 : 0;
+                    subtotal += absSmoothingCost
+                    const gst = subtotal * 0.18;
+
+                    currentTotal = subtotal + gst;
+
+                    subtotalCostDiv.textContent = `₹${subtotal.toFixed(2)}`;
+                    gstCostDiv.textContent = `₹${gst.toFixed(2)}`;
+                    totalCostDiv.textContent = `₹${currentTotal.toFixed(2)}`;
+
+                    resultsContainer.style.display = 'block';
+                    placeOrderBtn.disabled = false; // Enable place order button
+                } else {
+                    errorMessageDiv.textContent = 'Your file is either invalid or your model is bigger than our current capacity.';
+                    errorMessageDiv.style.display = 'block';
+                    resultsContainer.style.display = 'none';
+                    placeOrderBtn.disabled = true;
+                }
+            } catch (error) {
+                console.error('Error during quotation calculation:', error);
+                errorMessageDiv.textContent = 'An error occurred during quotation calculation. Please try again.';
+                errorMessageDiv.style.display = 'block';
+                resultsContainer.style.display = 'none';
+                placeOrderBtn.disabled = true;
+            } finally {
+                loadingDiv.style.display = 'none';
+                calculateButton.disabled = uploadedFiles.length === 0;
+            }
+        });
+    });
+</script>
+{% endblock %}

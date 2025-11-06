@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Machine Shop Suite{% endblock %}</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="/" class="flex items-center space-x-3">
+                        <svg class="w-8 h-8" style="color: #ff5733" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+                        </svg>
+                        <div>
+                            <div class="text-xl font-bold text-gray-900">Machine Shop Suite</div>
+                            <div class="text-xs text-gray-500">3D Printing Quote Engine</div>
+                        </div>
+                    </a>
+                </div>
+
+                <div class="flex items-center space-x-4">
+                    <a href="/" class="text-gray-700 px-3 py-2 rounded-md text-sm font-medium {% if request.path == '/' %}text-white{% endif %}" style="{% if request.path == '/' %}background-color: #ff5733{% else %}hover:color: #ff5733{% endif %}">
+                        Quote Engine
+                    </a>
+                    <a href="/settings" class="text-gray-700 px-3 py-2 rounded-md text-sm font-medium {% if request.path == '/settings' %}text-white{% endif %}" style="{% if request.path == '/settings' %}background-color: #ff5733{% else %}hover:color: #ff5733{% endif %}">
+                        Settings
+                    </a>
+                    <a href="https://github.com/Machine-Shop-Suite/3D-Printing-Quote-Engine" target="_blank" class="text-gray-500 hover:text-gray-700" title="View on GitHub">
+                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                            <path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd"/>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-gray-200 mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Consultancy Banner -->
+            <div class="bg-gradient-to-r from-orange-50 to-red-50 rounded-lg p-6 mb-6 border border-[#ff5733]/20">
+                <div class="flex items-start space-x-4">
+                    <div class="flex-shrink-0">
+                        <svg class="w-8 h-8 text-[#ff5733]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                        </svg>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2">Need Help Setting Up?</h3>
+                        <p class="text-sm text-gray-600 mb-3">Get professional consultancy services for deploying and customizing Machine Shop Suite for your business.</p>
+                        <div class="flex flex-wrap gap-3 items-center">
+                            <a href="mailto:burstneuron1729@gmail.com?subject=Machine%20Shop%20Suite%20Setup%20Consultation" class="inline-flex items-center px-4 py-2 bg-[#ff5733] text-white rounded-md hover:bg-[#e63c1a] transition-colors text-sm font-medium">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                                </svg>
+                                Contact for Consultation
+                            </a>
+                            <a href="https://burstneuron.com" target="_blank" class="text-[#ff5733] hover:underline text-sm font-medium">
+                                Visit Burst Neuron →
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer Credits -->
+            <div class="text-center text-sm text-gray-500 space-y-2">
+                <p>&copy; 2025 Machine Shop Suite. Open source under <a href="https://github.com/Machine-Shop-Suite/3D-Printing-Quote-Engine/blob/main/LICENSE" target="_blank" class="text-[#ff5733] hover:underline">MIT License</a>.</p>
+                <div class="flex items-center justify-center space-x-2 flex-wrap">
+                    <span>Powered by</span>
+                    <a href="https://www.prusa3d.com/page/prusaslicer_424/" target="_blank" class="text-[#ff5733] hover:underline font-medium">PrusaSlicer</a>
+                    <span>•</span>
+                    <span>Created by</span>
+                    <a href="https://burstneuron.com" target="_blank" class="text-[#ff5733] hover:underline font-medium">Burst Neuron</a>
+                </div>
+                <p class="text-xs">
+                    <a href="https://github.com/Machine-Shop-Suite/3D-Printing-Quote-Engine" target="_blank" class="text-gray-400 hover:text-[#ff5733]">View on GitHub</a>
+                    <span class="mx-2">•</span>
+                    <a href="https://github.com/Machine-Shop-Suite/3D-Printing-Quote-Engine/issues" target="_blank" class="text-gray-400 hover:text-[#ff5733]">Report Issues</a>
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

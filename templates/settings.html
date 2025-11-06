@@ -1,0 +1,633 @@
+{% extends "base.html" %}
+
+{% block title %}Settings - Machine Shop Suite{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <h1 class="text-3xl font-bold text-gray-900">Configuration Settings</h1>
+    <p class="mt-2 text-sm text-gray-600">Configure pricing, materials, and printer settings for your quote engine.</p>
+</div>
+
+<!-- Success/Error Messages -->
+<div id="successMessage" class="bg-green-50 border border-green-200 rounded-md p-4 mb-6 hidden">
+    <div class="flex">
+        <svg class="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+        </svg>
+        <div class="ml-3">
+            <p id="successText" class="text-sm text-green-800"></p>
+        </div>
+    </div>
+</div>
+
+<div id="errorMessage" class="bg-red-50 border border-red-200 rounded-md p-4 mb-6 hidden">
+    <div class="flex">
+        <svg class="w-5 h-5 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+        </svg>
+        <div class="ml-3">
+            <p id="errorText" class="text-sm text-red-800"></p>
+        </div>
+    </div>
+</div>
+
+<!-- Tabs -->
+<div class="border-b border-gray-200 mb-6">
+    <nav class="-mb-px flex space-x-8">
+        <button onclick="showTab('pricing')" id="tab-pricing" class="tab-btn border-b-2 border-[#ff5733] py-4 px-1 text-sm font-medium text-[#ff5733]">
+            Pricing
+        </button>
+        <button onclick="showTab('materials')" id="tab-materials" class="tab-btn border-b-2 border-transparent py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
+            Materials
+        </button>
+        <button onclick="showTab('printers')" id="tab-printers" class="tab-btn border-b-2 border-transparent py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
+            Printers
+        </button>
+        <button onclick="showTab('postprocessing')" id="tab-postprocessing" class="tab-btn border-b-2 border-transparent py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
+            Post-Processing
+        </button>
+        <button onclick="showTab('advanced')" id="tab-advanced" class="tab-btn border-b-2 border-transparent py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
+            Advanced
+        </button>
+    </nav>
+</div>
+
+<!-- Pricing Tab -->
+<div id="pricing-tab" class="tab-content">
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Pricing Configuration</h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Base Cost (₹)</label>
+                <input type="number" id="base_cost" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                <p class="mt-1 text-xs text-gray-500">Fixed cost per print job (setup, handling)</p>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Electricity Rate (₹/kWh)</label>
+                <input type="number" step="0.1" id="electricity_rate" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                <p class="mt-1 text-xs text-gray-500">Cost of electricity per kilowatt-hour</p>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Printer Power (Watts)</label>
+                <input type="number" id="printer_power" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                <p class="mt-1 text-xs text-gray-500">Average power consumption of 3D printer</p>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Depreciation (₹/hour)</label>
+                <input type="number" id="depreciation" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                <p class="mt-1 text-xs text-gray-500">Machine wear and tear cost per hour</p>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Other Costs (₹)</label>
+                <input type="number" id="other_costs" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                <p class="mt-1 text-xs text-gray-500">Miscellaneous operational costs per print</p>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">GST/Tax Rate (%)</label>
+                <input type="number" step="0.01" id="gst_rate" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                <p class="mt-1 text-xs text-gray-500">Tax percentage (e.g., 18 for 18%)</p>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Currency</label>
+                <input type="text" id="currency" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                <p class="mt-1 text-xs text-gray-500">Currency code (e.g., INR, USD)</p>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Currency Symbol</label>
+                <input type="text" id="currency_symbol" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                <p class="mt-1 text-xs text-gray-500">Symbol to display (e.g., ₹, $)</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Materials Tab -->
+<div id="materials-tab" class="tab-content hidden">
+    <div class="mb-4 flex justify-end">
+        <button onclick="addNewMaterial()" class="bg-[#ff5733] text-white px-4 py-2 rounded-md hover:bg-[#e63c1a] transition-colors font-medium text-sm flex items-center space-x-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+            </svg>
+            <span>Add New Material</span>
+        </button>
+    </div>
+    <div class="space-y-6" id="materialsContainer">
+        <!-- Materials will be dynamically loaded here -->
+    </div>
+</div>
+
+<!-- Printers Tab -->
+<div id="printers-tab" class="tab-content hidden">
+    <div class="mb-4 flex justify-end">
+        <button onclick="addNewPrinter()" class="bg-[#ff5733] text-white px-4 py-2 rounded-md hover:bg-[#e63c1a] transition-colors font-medium text-sm flex items-center space-x-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+            </svg>
+            <span>Add New Printer</span>
+        </button>
+    </div>
+    <div class="space-y-6" id="printersContainer">
+        <!-- Printers will be dynamically loaded here -->
+    </div>
+</div>
+
+<!-- Post-Processing Tab -->
+<div id="postprocessing-tab" class="tab-content hidden">
+    <div class="mb-4 flex justify-end">
+        <button onclick="addNewPostProcessing()" class="bg-[#ff5733] text-white px-4 py-2 rounded-md hover:bg-[#e63c1a] transition-colors font-medium text-sm flex items-center space-x-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+            </svg>
+            <span>Add New Post-Processing Option</span>
+        </button>
+    </div>
+    <div class="space-y-6" id="postProcessingContainer">
+        <!-- Post-processing options will be dynamically loaded here -->
+    </div>
+</div>
+
+<!-- Advanced Tab -->
+<div id="advanced-tab" class="tab-content hidden">
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Advanced Settings</h2>
+
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">PrusaSlicer Path</label>
+                <input type="text" id="slicer_path" placeholder="/usr/local/bin/prusa-slicer" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                <p class="mt-1 text-xs text-gray-500">Full path to PrusaSlicer executable</p>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Slicing Timeout (seconds)</label>
+                <input type="number" id="slicer_timeout" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                <p class="mt-1 text-xs text-gray-500">Maximum time to wait for slicing to complete</p>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Max File Size (MB)</label>
+                <input type="number" id="max_file_size" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                <p class="mt-1 text-xs text-gray-500">Maximum STL file size allowed for upload</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Save Button -->
+<div class="mt-8 flex justify-end">
+    <button onclick="saveSettings()" class="bg-[#ff5733] text-white px-6 py-3 rounded-md hover:bg-[#e63c1a] transition-colors font-medium">
+        <span id="saveText">Save All Settings</span>
+        <span id="saveSpinner" class="hidden">
+            <svg class="animate-spin h-5 w-5 inline-block" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Saving...
+        </span>
+    </button>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+let currentSettings = {};
+
+// Load settings on page load
+document.addEventListener('DOMContentLoaded', async () => {
+    await loadSettings();
+});
+
+async function loadSettings() {
+    try {
+        const response = await fetch('/api/settings');
+        const data = await response.json();
+
+        if (data.success) {
+            currentSettings = data.settings;
+            populateFields();
+        } else {
+            showError('Failed to load settings');
+        }
+    } catch (error) {
+        showError('Error loading settings: ' + error.message);
+    }
+}
+
+function populateFields() {
+    // Pricing
+    const pricing = currentSettings.pricing || {};
+    document.getElementById('base_cost').value = pricing.base_cost || 150;
+    document.getElementById('electricity_rate').value = pricing.electricity_rate_per_kwh || 7;
+    document.getElementById('printer_power').value = pricing.printer_power_watts || 1000;
+    document.getElementById('depreciation').value = pricing.depreciation_per_hour || 50;
+    document.getElementById('other_costs').value = pricing.other_costs_per_print || 20;
+    document.getElementById('gst_rate').value = (pricing.gst_rate || 0.18) * 100;
+    document.getElementById('currency').value = pricing.currency || 'INR';
+    document.getElementById('currency_symbol').value = pricing.currency_symbol || '₹';
+
+    // Advanced
+    const slicer = currentSettings.slicer || {};
+    document.getElementById('slicer_path').value = slicer.path || 'prusa-slicer';
+    document.getElementById('slicer_timeout').value = slicer.timeout_seconds || 300;
+
+    const fileSettings = currentSettings.file_settings || {};
+    document.getElementById('max_file_size').value = fileSettings.max_file_size_mb || 100;
+
+    // Materials, Printers, and Post-Processing
+    populateMaterials();
+    populatePrinters();
+    populatePostProcessing();
+}
+
+function populateMaterials() {
+    const container = document.getElementById('materialsContainer');
+    container.innerHTML = '';
+
+    const materials = currentSettings.materials || {};
+
+    for (const [key, mat] of Object.entries(materials)) {
+        const div = document.createElement('div');
+        div.className = 'bg-white rounded-lg shadow-sm border border-gray-200 p-6';
+        div.innerHTML = `
+            <div class="flex justify-between items-start mb-4">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900">${mat.name}</h3>
+                    <input type="text" data-material="${key}" data-field="name" value="${mat.name}" class="mt-1 px-2 py-1 text-sm border border-gray-300 rounded-md" placeholder="Material name">
+                </div>
+                <button onclick="removeMaterial('${key}')" class="text-red-600 hover:text-red-800 flex items-center space-x-1 text-sm">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                    </svg>
+                    <span>Remove</span>
+                </button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Price per kg (₹)</label>
+                    <input type="number" data-material="${key}" data-field="price_per_kg" value="${mat.price_per_kg}" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Density (g/cm³)</label>
+                    <input type="number" step="0.01" data-material="${key}" data-field="density_g_cm3" value="${mat.density_g_cm3}" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Bed Temperature (°C)</label>
+                    <input type="number" data-material="${key}" data-field="bed_temp" value="${mat.bed_temp}" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Extruder Temperature (°C)</label>
+                    <input type="number" data-material="${key}" data-field="extruder_temp" value="${mat.extruder_temp}" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Perimeter Speed (mm/s)</label>
+                    <input type="number" data-material="${key}" data-field="perimeter_speed" value="${mat.perimeter_speed}" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Infill Speed (mm/s)</label>
+                    <input type="number" data-material="${key}" data-field="infill_speed" value="${mat.infill_speed}" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                </div>
+            </div>
+        `;
+        container.appendChild(div);
+    }
+}
+
+function populatePrinters() {
+    const container = document.getElementById('printersContainer');
+    container.innerHTML = '';
+
+    const printers = currentSettings.printers || {};
+
+    for (const [key, printer] of Object.entries(printers)) {
+        const div = document.createElement('div');
+        div.className = 'bg-white rounded-lg shadow-sm border border-gray-200 p-6';
+        div.innerHTML = `
+            <div class="flex justify-between items-start mb-4">
+                <div class="flex-1">
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1">
+                            <h3 class="text-lg font-semibold text-gray-900">${printer.name}</h3>
+                            <input type="text" data-printer="${key}" data-field="name" value="${printer.name}" class="mt-1 px-2 py-1 text-sm border border-gray-300 rounded-md w-full max-w-xs" placeholder="Printer name">
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <label class="flex items-center space-x-2">
+                                <input type="checkbox" data-printer="${key}" data-field="enabled" ${printer.enabled ? 'checked' : ''} class="w-4 h-4 text-[#ff5733] border-gray-300 rounded">
+                                <span class="text-sm text-gray-700">Enabled</span>
+                            </label>
+                            <button onclick="removePrinter('${key}')" class="text-red-600 hover:text-red-800 flex items-center space-x-1 text-sm">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                                </svg>
+                                <span>Remove</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Bed Size X (mm)</label>
+                    <input type="number" data-printer="${key}" data-field="bed_size_x" value="${printer.bed_size_mm[0]}" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Bed Size Y (mm)</label>
+                    <input type="number" data-printer="${key}" data-field="bed_size_y" value="${printer.bed_size_mm[1]}" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Bed Size Z (mm)</label>
+                    <input type="number" data-printer="${key}" data-field="bed_size_z" value="${printer.bed_size_mm[2]}" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Nozzle Diameter (mm)</label>
+                    <input type="number" step="0.1" data-printer="${key}" data-field="nozzle_diameter_mm" value="${printer.nozzle_diameter_mm}" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Max Print Speed (mm/s)</label>
+                    <input type="number" data-printer="${key}" data-field="max_print_speed_mm_s" value="${printer.max_print_speed_mm_s}" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Markup Multiplier</label>
+                    <input type="number" step="0.01" data-printer="${key}" data-field="markup_multiplier" value="${printer.markup_multiplier || 1.3}" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                    <p class="mt-1 text-xs text-gray-500">Profit margin (1.0 = no markup, 1.3 = 30% markup)</p>
+                </div>
+            </div>
+        `;
+        container.appendChild(div);
+    }
+}
+
+function populatePostProcessing() {
+    const container = document.getElementById('postProcessingContainer');
+    container.innerHTML = '';
+
+    const postProcessing = currentSettings.post_processing || {};
+
+    for (const [key, pp] of Object.entries(postProcessing)) {
+        const div = document.createElement('div');
+        div.className = 'bg-white rounded-lg shadow-sm border border-gray-200 p-6';
+        div.innerHTML = `
+            <div class="flex justify-between items-start mb-4">
+                <div class="flex-1">
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1">
+                            <h3 class="text-lg font-semibold text-gray-900">${pp.name}</h3>
+                            <input type="text" data-pp="${key}" data-field="name" value="${pp.name}" class="mt-1 px-2 py-1 text-sm border border-gray-300 rounded-md w-full max-w-xs" placeholder="Option name">
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <label class="flex items-center space-x-2">
+                                <input type="checkbox" data-pp="${key}" data-field="enabled" ${pp.enabled ? 'checked' : ''} class="w-4 h-4 text-[#ff5733] border-gray-300 rounded">
+                                <span class="text-sm text-gray-700">Enabled</span>
+                            </label>
+                            <button onclick="removePostProcessing('${key}')" class="text-red-600 hover:text-red-800 flex items-center space-x-1 text-sm">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                                </svg>
+                                <span>Remove</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                    <textarea data-pp="${key}" data-field="description" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="Describe this post-processing option">${pp.description || ''}</textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Price (₹)</label>
+                    <input type="number" data-pp="${key}" data-field="price" value="${pp.price || 0}" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                    <p class="mt-1 text-xs text-gray-500">Price per unit for this service</p>
+                </div>
+            </div>
+        `;
+        container.appendChild(div);
+    }
+}
+
+function addNewMaterial() {
+    const materialKey = 'custom_material_' + Date.now();
+    const newMaterial = {
+        name: 'New Material',
+        price_per_kg: 1000,
+        density_g_cm3: 1.2,
+        bed_temp: 60,
+        extruder_temp: 200,
+        perimeter_speed: 50,
+        infill_speed: 80,
+        description: 'Custom material'
+    };
+
+    if (!currentSettings.materials) {
+        currentSettings.materials = {};
+    }
+
+    currentSettings.materials[materialKey] = newMaterial;
+    populateMaterials();
+    showSuccess('New material added. Don\'t forget to save!');
+}
+
+function removeMaterial(key) {
+    if (confirm('Are you sure you want to remove this material?')) {
+        delete currentSettings.materials[key];
+        populateMaterials();
+        showSuccess('Material removed. Don\'t forget to save!');
+    }
+}
+
+function addNewPrinter() {
+    const printerKey = 'custom_printer_' + Date.now();
+    const newPrinter = {
+        name: 'New Printer',
+        bed_size_mm: [200, 200, 200],
+        nozzle_diameter_mm: 0.4,
+        max_print_speed_mm_s: 150,
+        enabled: true,
+        description: 'Custom printer'
+    };
+
+    if (!currentSettings.printers) {
+        currentSettings.printers = {};
+    }
+
+    currentSettings.printers[printerKey] = newPrinter;
+    populatePrinters();
+    showSuccess('New printer added. Don\'t forget to save!');
+}
+
+function removePrinter(key) {
+    if (confirm('Are you sure you want to remove this printer?')) {
+        delete currentSettings.printers[key];
+        populatePrinters();
+        showSuccess('Printer removed. Don\'t forget to save!');
+    }
+}
+
+function addNewPostProcessing() {
+    const ppKey = 'custom_pp_' + Date.now();
+    const newPP = {
+        name: 'New Post-Processing',
+        description: 'Custom post-processing service',
+        price: 500,
+        enabled: true
+    };
+
+    if (!currentSettings.post_processing) {
+        currentSettings.post_processing = {};
+    }
+
+    currentSettings.post_processing[ppKey] = newPP;
+    populatePostProcessing();
+    showSuccess('New post-processing option added. Don\'t forget to save!');
+}
+
+function removePostProcessing(key) {
+    if (confirm('Are you sure you want to remove this post-processing option?')) {
+        delete currentSettings.post_processing[key];
+        populatePostProcessing();
+        showSuccess('Post-processing option removed. Don\'t forget to save!');
+    }
+}
+
+async function saveSettings() {
+    showSaving();
+
+    try {
+        // Collect all settings from form
+        const newSettings = JSON.parse(JSON.stringify(currentSettings));
+
+        // Update pricing
+        newSettings.pricing.base_cost = parseFloat(document.getElementById('base_cost').value);
+        newSettings.pricing.electricity_rate_per_kwh = parseFloat(document.getElementById('electricity_rate').value);
+        newSettings.pricing.printer_power_watts = parseInt(document.getElementById('printer_power').value);
+        newSettings.pricing.depreciation_per_hour = parseFloat(document.getElementById('depreciation').value);
+        newSettings.pricing.other_costs_per_print = parseFloat(document.getElementById('other_costs').value);
+        newSettings.pricing.gst_rate = parseFloat(document.getElementById('gst_rate').value) / 100;
+        newSettings.pricing.currency = document.getElementById('currency').value;
+        newSettings.pricing.currency_symbol = document.getElementById('currency_symbol').value;
+
+        // Update advanced
+        newSettings.slicer.path = document.getElementById('slicer_path').value;
+        newSettings.slicer.timeout_seconds = parseInt(document.getElementById('slicer_timeout').value);
+        newSettings.file_settings.max_file_size_mb = parseInt(document.getElementById('max_file_size').value);
+
+        // Update materials
+        const materialInputs = document.querySelectorAll('[data-material]');
+        materialInputs.forEach(input => {
+            const material = input.dataset.material;
+            const field = input.dataset.field;
+            const value = input.type === 'number' ? parseFloat(input.value) : input.value;
+            newSettings.materials[material][field] = value;
+        });
+
+        // Update printers
+        const printerInputs = document.querySelectorAll('[data-printer]');
+        printerInputs.forEach(input => {
+            const printer = input.dataset.printer;
+            const field = input.dataset.field;
+
+            if (field === 'enabled') {
+                newSettings.printers[printer][field] = input.checked;
+            } else if (field === 'bed_size_x') {
+                newSettings.printers[printer].bed_size_mm[0] = parseInt(input.value);
+            } else if (field === 'bed_size_y') {
+                newSettings.printers[printer].bed_size_mm[1] = parseInt(input.value);
+            } else if (field === 'bed_size_z') {
+                newSettings.printers[printer].bed_size_mm[2] = parseInt(input.value);
+            } else {
+                const value = input.type === 'number' ? parseFloat(input.value) : input.value;
+                newSettings.printers[printer][field] = value;
+            }
+        });
+
+        // Update post-processing
+        const ppInputs = document.querySelectorAll('[data-pp]');
+        ppInputs.forEach(input => {
+            const pp = input.dataset.pp;
+            const field = input.dataset.field;
+
+            if (field === 'enabled') {
+                newSettings.post_processing[pp][field] = input.checked;
+            } else if (input.tagName === 'TEXTAREA') {
+                newSettings.post_processing[pp][field] = input.value;
+            } else {
+                const value = input.type === 'number' ? parseFloat(input.value) : input.value;
+                newSettings.post_processing[pp][field] = value;
+            }
+        });
+
+        // Send to server
+        const response = await fetch('/api/settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(newSettings)
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            currentSettings = newSettings;
+            showSuccess('Settings saved successfully!');
+        } else {
+            throw new Error(data.error || 'Failed to save settings');
+        }
+    } catch (error) {
+        showError('Error saving settings: ' + error.message);
+    } finally {
+        hideSaving();
+    }
+}
+
+function showTab(tabName) {
+    // Hide all tabs
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.add('hidden');
+    });
+
+    // Remove active state from all buttons
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('border-[#ff5733]', 'text-[#ff5733]');
+        btn.classList.add('border-transparent', 'text-gray-500');
+    });
+
+    // Show selected tab
+    document.getElementById(tabName + '-tab').classList.remove('hidden');
+
+    // Activate button
+    const btn = document.getElementById('tab-' + tabName);
+    btn.classList.add('border-[#ff5733]', 'text-[#ff5733]');
+    btn.classList.remove('border-transparent', 'text-gray-500');
+}
+
+function showSuccess(message) {
+    const div = document.getElementById('successMessage');
+    document.getElementById('successText').textContent = message;
+    div.classList.remove('hidden');
+    setTimeout(() => div.classList.add('hidden'), 5000);
+}
+
+function showError(message) {
+    const div = document.getElementById('errorMessage');
+    document.getElementById('errorText').textContent = message;
+    div.classList.remove('hidden');
+    setTimeout(() => div.classList.add('hidden'), 5000);
+}
+
+function showSaving() {
+    document.getElementById('saveText').classList.add('hidden');
+    document.getElementById('saveSpinner').classList.remove('hidden');
+}
+
+function hideSaving() {
+    document.getElementById('saveText').classList.remove('hidden');
+    document.getElementById('saveSpinner').classList.add('hidden');
+}
+</script>
+{% endblock %}
