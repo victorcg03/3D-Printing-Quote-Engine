@@ -46,6 +46,7 @@ class Config:
                     "description": "Easy to print, biodegradable, good for prototypes",
                     "density_g_cm3": 1.24,
                     "price_per_kg": 800,
+                    "per_gram_price": 1.0,
                     "bed_temp": 55,
                     "extruder_temp": 215,
                     "perimeter_speed": 100,
@@ -58,6 +59,7 @@ class Config:
                     "description": "Strong and durable, heat resistant, good for functional parts",
                     "density_g_cm3": 1.04,
                     "price_per_kg": 1000,
+                    "per_gram_price": 1.2,
                     "bed_temp": 90,
                     "extruder_temp": 245,
                     "perimeter_speed": 80,
@@ -70,6 +72,7 @@ class Config:
                     "description": "Strong, flexible, chemical resistant, food-safe option",
                     "density_g_cm3": 1.27,
                     "price_per_kg": 1000,
+                    "per_gram_price": 1.2,
                     "bed_temp": 70,
                     "extruder_temp": 240,
                     "perimeter_speed": 70,
@@ -82,6 +85,7 @@ class Config:
                     "description": "Flexible and elastic, excellent for grips and cushioning",
                     "density_g_cm3": 1.21,
                     "price_per_kg": 1500,
+                    "per_gram_price": 2.0,
                     "bed_temp": 60,
                     "extruder_temp": 230,
                     "perimeter_speed": 30,
@@ -94,6 +98,7 @@ class Config:
                     "description": "Very strong and durable, excellent layer adhesion",
                     "density_g_cm3": 1.14,
                     "price_per_kg": 1800,
+                    "per_gram_price": 2.5,
                     "bed_temp": 80,
                     "extruder_temp": 250,
                     "perimeter_speed": 60,
@@ -137,6 +142,7 @@ class Config:
                 }
             },
             "pricing": {
+                "pricing_mode": "custom",
                 "base_cost": 150,
                 "electricity_rate_per_kwh": 7,
                 "printer_power_watts": 1000,
@@ -252,6 +258,10 @@ class Config:
     def get_pricing_config(self):
         """Get pricing configuration"""
         return self.config_data.get('pricing', {})
+
+    def get_pricing_mode(self):
+        """Get pricing mode (custom or per_gram)"""
+        return self.config_data.get('pricing', {}).get('pricing_mode', 'custom')
 
     def get_slicer_path(self):
         """Get PrusaSlicer executable path"""

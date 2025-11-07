@@ -57,7 +57,27 @@
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <h2 class="text-lg font-semibold text-gray-900 mb-4">Pricing Configuration</h2>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Pricing Mode Toggle -->
+        <div class="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <label class="block text-sm font-medium text-gray-700 mb-3">Pricing Mode</label>
+            <div class="flex items-center space-x-4">
+                <label class="flex items-center space-x-2 cursor-pointer">
+                    <input type="radio" name="pricing_mode" value="custom" id="pricing_mode_custom" class="w-4 h-4 text-[#ff5733] border-gray-300">
+                    <span class="text-sm font-medium text-gray-900">Custom Pricing</span>
+                </label>
+                <label class="flex items-center space-x-2 cursor-pointer">
+                    <input type="radio" name="pricing_mode" value="per_gram" id="pricing_mode_per_gram" class="w-4 h-4 text-[#ff5733] border-gray-300">
+                    <span class="text-sm font-medium text-gray-900">Per Gram Pricing</span>
+                </label>
+            </div>
+            <p class="mt-2 text-xs text-gray-500">
+                <strong>Custom:</strong> Complex pricing with electricity, depreciation, and markup.
+                <strong>Per Gram:</strong> Simple pricing based on material weight only (price per gram × weight + tax).
+            </p>
+        </div>
+
+        <!-- Custom Pricing Fields (shown when custom mode is selected) -->
+        <div id="customPricingFields" class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Base Cost (₹)</label>
                 <input type="number" id="base_cost" class="w-full px-3 py-2 border border-gray-300 rounded-md">
@@ -106,6 +126,7 @@
                 <p class="mt-1 text-xs text-gray-500">Symbol to display (e.g., ₹, $)</p>
             </div>
         </div>
+        <p class="mt-4 text-xs text-gray-500 italic">Note: These settings are only used when "Custom Pricing" mode is selected.</p>
     </div>
 </div>
 
@@ -224,6 +245,18 @@ async function loadSettings() {
 function populateFields() {
     // Pricing
     const pricing = currentSettings.pricing || {};
+    const pricingMode = pricing.pricing_mode || 'custom';
+
+    // Set pricing mode radio buttons
+    if (pricingMode === 'per_gram') {
+        document.getElementById('pricing_mode_per_gram').checked = true;
+    } else {
+        document.getElementById('pricing_mode_custom').checked = true;
+    }
+
+    // Toggle custom pricing fields visibility
+    toggleCustomPricingFields();
+
     document.getElementById('base_cost').value = pricing.base_cost || 150;
     document.getElementById('electricity_rate').value = pricing.electricity_rate_per_kwh || 7;
     document.getElementById('printer_power').value = pricing.printer_power_watts || 1000;
@@ -273,6 +306,12 @@ function populateMaterials() {
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Price per kg (₹)</label>
                     <input type="number" data-material="${key}" data-field="price_per_kg" value="${mat.price_per_kg}" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                    <p class="mt-1 text-xs text-gray-500">Used in Custom pricing mode</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Price per gram (₹)</label>
+                    <input type="number" step="0.01" data-material="${key}" data-field="per_gram_price" value="${mat.per_gram_price || 1.0}" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                    <p class="mt-1 text-xs text-gray-500">Used in Per Gram pricing mode</p>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Density (g/cm³)</label>
@@ -417,6 +456,7 @@ function addNewMaterial() {
     const newMaterial = {
         name: 'New Material',
         price_per_kg: 1000,
+        per_gram_price: 1.2,
         density_g_cm3: 1.2,
         bed_temp: 60,
         extruder_temp: 200,
@@ -504,6 +544,8 @@ async function saveSettings() {
         const newSettings = JSON.parse(JSON.stringify(currentSettings));
 
         // Update pricing
+        const pricingMode = document.querySelector('input[name="pricing_mode"]:checked').value;
+        newSettings.pricing.pricing_mode = pricingMode;
         newSettings.pricing.base_cost = parseFloat(document.getElementById('base_cost').value);
         newSettings.pricing.electricity_rate_per_kwh = parseFloat(document.getElementById('electricity_rate').value);
         newSettings.pricing.printer_power_watts = parseInt(document.getElementById('printer_power').value);
@@ -629,5 +671,25 @@ function hideSaving() {
     document.getElementById('saveText').classList.remove('hidden');
     document.getElementById('saveSpinner').classList.add('hidden');
 }
+
+function toggleCustomPricingFields() {
+    const pricingMode = document.querySelector('input[name="pricing_mode"]:checked')?.value || 'custom';
+    const customFields = document.getElementById('customPricingFields');
+
+    if (pricingMode === 'per_gram') {
+        customFields.style.opacity = '0.5';
+        customFields.style.pointerEvents = 'none';
+    } else {
+        customFields.style.opacity = '1';
+        customFields.style.pointerEvents = 'auto';
+    }
+}
+
+// Add event listeners for pricing mode radio buttons
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('input[name="pricing_mode"]').forEach(radio => {
+        radio.addEventListener('change', toggleCustomPricingFields);
+    });
+});
 </script>
 {% endblock %}

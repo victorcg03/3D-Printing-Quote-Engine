@@ -654,13 +654,54 @@
         const cancelOrder = document.getElementById('cancelOrder');
         const orderForm = document.getElementById('orderForm');
 
-        // Material prices per kg
+        // Configuration loaded from API
+        let appConfig = null;
+        let pricingMode = 'custom';
+
+        // Material prices per kg (fallback values)
         const materialPrices = {
             'pla': 800,
             'abs': 1000,
             'petg': 1000,
             'asa': 900
         };
+
+        // Material prices per gram (fallback values)
+        const materialPerGramPrices = {
+            'pla': 1.0,
+            'abs': 1.2,
+            'petg': 1.2,
+            'asa': 1.1
+        };
+
+        // Load configuration from API
+        async function loadConfig() {
+            try {
+                const response = await fetch('/api/config');
+                const data = await response.json();
+                if (data.success) {
+                    appConfig = data.config;
+                    pricingMode = appConfig.pricing?.pricing_mode || 'custom';
+
+                    // Update material prices from config
+                    if (appConfig.materials) {
+                        for (const [key, mat] of Object.entries(appConfig.materials)) {
+                            if (mat.price_per_kg) {
+                                materialPrices[key] = mat.price_per_kg;
+                            }
+                            if (mat.per_gram_price) {
+                                materialPerGramPrices[key] = mat.per_gram_price;
+                            }
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading config:', error);
+            }
+        }
+
+        // Load config on page load
+        loadConfig();
 
         // Density of materials in g/cm³
         const materialDensity = {
@@ -1000,16 +1041,26 @@
 
         // Calculate 3D print cost for a single part
         function calculate3DPrintCost(objectWeightGrams, material, timeHours) {
-            const materialCost = (objectWeightGrams / 1000) * materialPrices[material];
-            const electricityTariff = 7;
-            const printerPowerWatts = 1000;
+            let baseCost;
 
-            const electricityCost = (printerPowerWatts / 1000) * timeHours * electricityTariff;
-            const depreciationCost = 50 * timeHours;
-            const otherCosts = 20;
+            if (pricingMode === 'per_gram') {
+                // Simple per-gram pricing
+                const perGramPrice = materialPerGramPrices[material] || 1.0;
+                baseCost = objectWeightGrams * perGramPrice;
+            } else {
+                // Custom complex pricing
+                const materialCost = (objectWeightGrams / 1000) * (materialPrices[material] || 1000);
+                const electricityTariff = appConfig?.pricing?.electricity_rate_per_kwh || 7;
+                const printerPowerWatts = appConfig?.pricing?.printer_power_watts || 1000;
 
+                const electricityCost = (printerPowerWatts / 1000) * timeHours * electricityTariff;
+                const depreciationCost = (appConfig?.pricing?.depreciation_per_hour || 50) * timeHours;
+                const otherCosts = appConfig?.pricing?.other_costs_per_print || 20;
+                const baseSetupCost = appConfig?.pricing?.base_cost || 150;
 
-            const baseCost = materialCost + electricityCost + depreciationCost + otherCosts + 150;
+                baseCost = materialCost + electricityCost + depreciationCost + otherCosts + baseSetupCost;
+            }
+
             return {
                 baseCost: parseFloat(baseCost.toFixed(2)),
                 printTimeHours: parseFloat(timeHours.toFixed(2))

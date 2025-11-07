@@ -221,12 +221,88 @@ def calculate_quote():
         material_config = config.get_material(material)
         printer_config = config.get_printer(printer)
         pricing_config = config.get_pricing_config()
+        pricing_mode = config.get_pricing_mode()
 
         if not material_config:
             return jsonify({'success': False, 'error': 'Invalid material'}), 400
         if not printer_config:
             return jsonify({'success': False, 'error': 'Invalid printer'}), 400
 
+        # Currency
+        currency = pricing_config.get('currency', 'INR')
+        currency_symbol = pricing_config.get('currency_symbol', '₹')
+        gst_rate = pricing_config.get('gst_rate', 0.18)
+
+        # Check pricing mode
+        if pricing_mode == 'per_gram':
+            # Simple per-gram pricing
+            per_gram_price = material_config.get('per_gram_price', 1.0)
+            material_cost = filament_weight_g * per_gram_price
+
+            # Post-processing costs (per unit)
+            post_processing_cost_per_unit = 0
+            post_processing_details = []
+
+            for pp_key in post_processing_keys:
+                pp_option = config.get_post_processing(pp_key)
+                if pp_option and pp_option.get('enabled', True):
+                    pp_price = pp_option.get('price', 0)
+                    post_processing_cost_per_unit += pp_price
+                    post_processing_details.append({
+                        'key': pp_key,
+                        'name': pp_option.get('name', pp_key),
+                        'price': pp_price
+                    })
+
+            # Simple calculation: material_cost + post_processing per unit
+            subtotal_per_unit = material_cost
+
+            # Total before tax
+            total_before_tax = (subtotal_per_unit * quantity) + (post_processing_cost_per_unit * quantity)
+
+            # GST calculation
+            gst_amount = total_before_tax * gst_rate
+
+            # Final total
+            total_price = total_before_tax + gst_amount
+
+            # Return simplified breakdown for per-gram pricing
+            return jsonify({
+                'success': True,
+                'quote': {
+                    'breakdown': {
+                        'pricing_mode': 'per_gram',
+                        'per_gram_price': round(per_gram_price, 2),
+                        'filament_weight_g': filament_weight_g,
+                        'material_cost_per_unit': round(material_cost, 2),
+                        'subtotal_per_unit': round(subtotal_per_unit, 2),
+                        'quantity': quantity,
+                        'subtotal_all_units': round(subtotal_per_unit * quantity, 2),
+                        'post_processing_cost_per_unit': round(post_processing_cost_per_unit, 2),
+                        'post_processing_cost_total': round(post_processing_cost_per_unit * quantity, 2),
+                        'post_processing_details': post_processing_details,
+                        'total_before_tax': round(total_before_tax, 2),
+                        'gst_rate_percent': round(gst_rate * 100, 2),
+                        'gst_amount': round(gst_amount, 2),
+                        'total_price': round(total_price, 2)
+                    },
+                    'currency': currency,
+                    'currency_symbol': currency_symbol,
+                    'print_details': {
+                        'material': material,
+                        'material_name': material_config.get('name', material.upper()),
+                        'printer': printer,
+                        'printer_name': printer_config.get('name', printer.upper()),
+                        'quality': quality,
+                        'infill_density': infill_density,
+                        'filament_weight_g': filament_weight_g,
+                        'print_time_hours': print_time_hours,
+                        'quantity': quantity
+                    }
+                }
+            })
+
+        # Custom pricing mode (original complex logic)
         # Calculate costs
         # 1. Material cost
         material_price_per_kg = material_config.get('price_per_kg', 1000)
@@ -272,20 +348,17 @@ def calculate_quote():
         total_before_tax = (subtotal_per_unit * quantity) + (post_processing_cost_per_unit * quantity)
 
         # GST calculation
-        gst_rate = pricing_config.get('gst_rate', 0.18)
         gst_amount = total_before_tax * gst_rate
 
         # Final total
         total_price = total_before_tax + gst_amount
 
-        # Currency
-        currency = pricing_config.get('currency', 'INR')
-        currency_symbol = pricing_config.get('currency_symbol', '₹')
-
+        # Return custom pricing breakdown
         return jsonify({
             'success': True,
             'quote': {
                 'breakdown': {
+                    'pricing_mode': 'custom',
                     'material_cost_per_unit': round(material_cost, 2),
                     'electricity_cost_per_unit': round(electricity_cost, 2),
                     'depreciation_cost_per_unit': round(depreciation_cost, 2),
