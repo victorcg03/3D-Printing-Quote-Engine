@@ -33,6 +33,8 @@ COPY config.py .
 COPY utils.py .
 COPY templates/ ./templates/
 COPY static/ ./static/
+COPY quotes_store.py .
+COPY security.py .
 
 # Non-root user
 RUN useradd -m -u 1000 -s /bin/bash appuser \
