@@ -17,8 +17,16 @@ ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN")
 
 def require_admin():
     if not ADMIN_TOKEN:
-        return True  # dev: sin token no se protege
-    token = request.args.get("token") or request.headers.get("X-Admin-Token")
+        return True
+    token = (
+        request.args.get("token")
+        or request.headers.get("X-Admin-Token")
+        or request.headers.get("x-admin-token")
+    )
+    if not token:
+        auth = request.headers.get("Authorization", "")
+        if auth.lower().startswith("bearer "):
+            token = auth[7:].strip()
     return token == ADMIN_TOKEN
 # Initialize Flask app
 app = Flask(__name__)
@@ -38,6 +46,61 @@ if not app.debug:
     app.logger.setLevel(logging.INFO)
     app.logger.info('Machine Shop Suite startup')
 
+
+def _is_enabled_printer(printer_key: str) -> bool:
+    p = config.get_printer(printer_key)
+    return bool(p and p.get("enabled", True))
+
+def validate_quote_params(params: dict) -> dict:
+    """
+    Normaliza y valida params mínimos del quote.
+    Devuelve params normalizados.
+    Lanza ValueError con mensaje si no cuadra.
+    """
+    if not isinstance(params, dict):
+        raise ValueError("params must be an object")
+
+    material = (params.get("material") or "").strip().lower()
+    quality = (params.get("quality") or "").strip().lower()
+    printer = (params.get("printer") or "prusa_mk3s").strip().lower()
+
+    # qty: aceptamos qty o quantity
+    qty_raw = params.get("qty", params.get("quantity", 1))
+    try:
+        qty = int(qty_raw)
+    except Exception:
+        raise ValueError("qty must be an integer")
+    if qty < 1:
+        raise ValueError("qty must be >= 1")
+
+    # infill_density opcional
+    infill_raw = params.get("infill_density", 20)
+    try:
+        infill_density = int(infill_raw)
+    except Exception:
+        raise ValueError("infill_density must be an integer")
+    if infill_density < 5 or infill_density > 100:
+        raise ValueError("infill_density must be between 5 and 100")
+
+    if not material or not config.get_material(material):
+        raise ValueError(f"invalid material: {material or '(empty)'}")
+
+    if not quality or not config.get("print_quality", quality):
+        raise ValueError(f"invalid quality: {quality or '(empty)'}")
+
+    # printer debe existir y estar enabled
+    if not config.get_printer(printer) or not _is_enabled_printer(printer):
+        raise ValueError(f"invalid or disabled printer: {printer}")
+
+    # devuelve params normalizados
+    return {
+        "material": material,
+        "quality": quality,
+        "printer": printer,
+        "qty": qty,
+        "infill_density": infill_density,
+        # puedes añadir aquí más campos permitidos si quieres
+    }
 
 # ============================================================================
 # ROUTES
@@ -450,21 +513,18 @@ def manage_settings():
 
 @app.route("/api/quotes", methods=["POST"])
 def create_quote():
-    """
-    Paso 1: crea quote persistente desde payload JSON ya calculado.
-    En el siguiente paso lo conectamos con /api/slice + /api/calculate-quote.
-    """
     try:
         data = request.get_json() or {}
 
-        # aquí esperamos que el front mande params + (opcional) resultado slice
-        params = data.get("params") or {}
-        computed = data.get("computed") or {}  # {grams, hours, price, breakdown, currency}
+        params_in = data.get("params") or {}
+        params = validate_quote_params(params_in)
+
+        computed = data.get("computed") or {}
 
         quote_id = quotes_store.new_id()
         now = quotes_store.now()
-        expires_in = int(os.environ.get("QUOTE_TTL_SECONDS", "1800"))  # 30min
-        expires_at = now + expires_in
+        ttl = int(os.environ.get("QUOTE_TTL_SECONDS", "1800"))
+        expires_at = now + ttl
 
         quote = {
             "quoteId": quote_id,
@@ -477,15 +537,17 @@ def create_quote():
             "price": computed.get("price"),
             "currency": computed.get("currency", "EUR"),
         }
+
         quote["signature"] = sign_quote(quote)
 
         quotes_store.save(quote_id, quote)
         return jsonify({"success": True, "quote": quote}), 201
 
+    except ValueError as ve:
+        return jsonify({"success": False, "error": str(ve)}), 400
     except Exception as e:
         app.logger.error(f"Error creating quote: {str(e)}")
         return jsonify({"success": False, "error": "Failed to create quote"}), 500
-
 
 @app.route("/api/quotes/<quote_id>", methods=["GET"])
 def get_quote(quote_id: str):
@@ -501,6 +563,73 @@ def get_quote(quote_id: str):
 
     return jsonify({"success": True, "quote": quote})
 
+@app.route("/api/quotes/<quote_id>/refresh", methods=["POST"])
+def refresh_quote(quote_id: str):
+    """
+    Refresca/normaliza un quote:
+    - locked => 409
+    - si config cambió => recalc_required (invalidamos computed/price)
+    - si expiró => renueva TTL y vuelve a estimated (si config no cambió)
+    """
+    quote = quotes_store.load(quote_id)
+    if not quote:
+        return jsonify({"success": False, "error": "Not found"}), 404
+
+    if quote.get("status") == "locked":
+        return jsonify({"success": False, "error": "Quote is locked"}), 409
+
+    now = quotes_store.now()
+
+    # Revalida params por si el storage tenía algo viejo/corrupto
+    try:
+        quote["params"] = validate_quote_params(quote.get("params") or {})
+    except ValueError as ve:
+        quote["status"] = "recalc_required"
+        quote["error"] = f"invalid params: {str(ve)}"
+        quote["computed"] = {}
+        quote["price"] = None
+        quote["signature"] = sign_quote(quote)
+        quotes_store.save(quote_id, quote)
+        return jsonify({"success": True, "quote": quote}), 200
+
+    current_version = config.get_config_version()
+    if quote.get("configVersion") != current_version:
+        quote["status"] = "recalc_required"
+        quote["requiredConfigVersion"] = current_version
+        quote["computed"] = {}
+        quote["price"] = None
+        quote["currency"] = quote.get("currency", "EUR")
+        quote["refreshedAtTs"] = now
+
+        ttl = int(os.environ.get("QUOTE_TTL_SECONDS", "1800"))
+        quote["expiresAtTs"] = now + ttl
+
+        quote["signature"] = sign_quote(quote)
+        quotes_store.save(quote_id, quote)
+        return jsonify({"success": True, "quote": quote}), 200
+
+    # si expiró, renueva
+    if quotes_store.is_expired(quote):
+        quote["status"] = "estimated"
+        quote["refreshedAtTs"] = now
+        ttl = int(os.environ.get("QUOTE_TTL_SECONDS", "1800"))
+        quote["expiresAtTs"] = now + ttl
+
+        quote["signature"] = sign_quote(quote)
+        quotes_store.save(quote_id, quote)
+        return jsonify({"success": True, "quote": quote}), 200
+
+    # no expiró y config igual -> opcionalmente solo “tocar” TTL o no hacer nada
+    extend_ttl = (request.get_json() or {}).get("extendTtl", False)
+    if extend_ttl:
+        ttl = int(os.environ.get("QUOTE_TTL_SECONDS", "1800"))
+        quote["expiresAtTs"] = now + ttl
+
+    quote["refreshedAtTs"] = now
+    quote["signature"] = sign_quote(quote)
+    quotes_store.save(quote_id, quote)
+
+    return jsonify({"success": True, "quote": quote}), 200
 
 @app.route("/api/quotes/<quote_id>/lock", methods=["POST"])
 def lock_quote(quote_id: str):
@@ -519,7 +648,8 @@ def lock_quote(quote_id: str):
 
     # si cambió config -> obliga recalcular (en este paso solo avisamos)
     current_version = config.get_config_version()
-    if quote.get("configVersion") != current_version:
+    required = quote.get("requiredConfigVersion") or quote.get("configVersion")
+    if required != current_version:
         return jsonify({"success": False, "error": "Config changed, recalc required"}), 409
 
     quote["status"] = "locked"

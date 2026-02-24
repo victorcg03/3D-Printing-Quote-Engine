@@ -2,9 +2,11 @@ import json
 import os
 import time
 import secrets
+import re
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 
+QUOTE_ID_RE = re.compile(r"^q_[0-9a-f]{24}$")
 DEFAULT_QUOTES_DIR = os.environ.get("QUOTES_DIR", "/app/data/quotes")
 
 def _now_ts() -> int:
@@ -25,16 +27,18 @@ class QuotesStore:
         return f"q_{secrets.token_hex(12)}"
 
     def quote_dir(self, quote_id: str) -> Path:
+        if not QUOTE_ID_RE.match(quote_id):
+            raise ValueError("invalid quote id")
         return self.base / quote_id
 
     def quote_path(self, quote_id: str) -> Path:
         return self.quote_dir(quote_id) / "quote.json"
 
-    def save(self, quote_id: str, quote: Dict[str, Any]) -> None:
-        _atomic_write_json(self.quote_path(quote_id), quote)
-
     def load(self, quote_id: str) -> Optional[Dict[str, Any]]:
-        p = self.quote_path(quote_id)
+        try:
+            p = self.quote_path(quote_id)
+        except ValueError:
+            return None
         if not p.exists():
             return None
         try:
@@ -44,7 +48,14 @@ class QuotesStore:
             return None
 
     def exists(self, quote_id: str) -> bool:
-        return self.quote_path(quote_id).exists()
+        try:
+            return self.quote_path(quote_id).exists()
+        except ValueError:
+            return False
+
+    def save(self, quote_id: str, quote: Dict[str, Any]) -> None:
+        # save sólo lo llamas con ids generados por ti, pero por seguridad:
+        _atomic_write_json(self.quote_path(quote_id), quote)
 
     def is_expired(self, quote: Dict[str, Any]) -> bool:
         exp = quote.get("expiresAtTs")
