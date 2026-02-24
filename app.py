@@ -2,7 +2,7 @@
 Machine Shop Suite - 3D Printing Quote Engine
 Open source quote calculator for 3D printing services
 """
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, abort
 from werkzeug.utils import secure_filename
 import os
 import tempfile
@@ -12,11 +12,17 @@ from logging.handlers import RotatingFileHandler
 from config import config
 from utils import allowed_file, convert_stl_to_gcode, extract_filament_usage
 
+ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN")
+
+def require_admin():
+    if not ADMIN_TOKEN:
+        return True  # dev: sin token no se protege
+    token = request.args.get("token") or request.headers.get("X-Admin-Token")
+    return token == ADMIN_TOKEN
 # Initialize Flask app
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = config.get('file_settings', 'max_file_size_mb', default=100) * 1024 * 1024
 app.config['UPLOAD_FOLDER'] = tempfile.gettempdir()
-
 # Configure logging
 if not app.debug:
     if not os.path.exists('logs'):
@@ -49,10 +55,15 @@ def index():
                          infill_options=infill_options,
                          printers=printers)
 
+@app.errorhandler(401)
+def unauthorized(_):
+    return jsonify({'success': False, 'error': 'Unauthorized'}), 401
 
 @app.route('/settings')
 def settings_page():
     """Configuration settings page for admin"""
+    if not require_admin():
+        abort(401)
     return render_template('settings.html', config=config.config_data)
 
 
@@ -405,6 +416,8 @@ def manage_settings():
     GET: Return current settings
     POST: Update settings
     """
+    if not require_admin():
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
     if request.method == 'GET':
         try:
             return jsonify({
