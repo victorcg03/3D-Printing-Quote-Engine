@@ -10,9 +10,34 @@ ENV PYTHONUNBUFFERED=1 \
 RUN apt-get update && apt-get install -y --no-install-recommends \
     wget ca-certificates \
     gosu \
+    # OpenGL
     libgl1 \
     libglu1-mesa \
+    # Core runtime libs
     libglib2.0-0 \
+    # GTK3 runtime (PrusaSlicer GTK3 build)
+    libgtk-3-0 \
+    libgdk-pixbuf-2.0-0 \
+    libpango-1.0-0 \
+    libcairo2 \
+    libatk1.0-0 \
+    libatk-bridge2.0-0 \
+    # X11 libs commonly required by GTK apps
+    libx11-6 \
+    libxext6 \
+    libxrender1 \
+    libxi6 \
+    libxrandr2 \
+    libxcursor1 \
+    libxdamage1 \
+    libxfixes3 \
+    libxcomposite1 \
+    libxinerama1 \
+    libsm6 \
+    libice6 \
+    # Fonts/rendering
+    libfontconfig1 \
+    libfreetype6 \
   && rm -rf /var/lib/apt/lists/*
 
 # PrusaSlicer (AppImage) -> extract (no FUSE)
