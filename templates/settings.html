@@ -1,9 +1,9 @@
-{% extends "base.html" %} {% block title %}Settings - Machine Shop Suite{%
+{% extends "base.html" %} {% block title %}Ajustes - Machine Shop Suite{%
 endblock %} {% block content %}
 <div class="mb-8">
-  <h1 class="text-3xl font-bold text-gray-900">Configuration Settings</h1>
+  <h1 class="text-3xl font-bold text-gray-900">Ajustes de configuración</h1>
   <p class="mt-2 text-sm text-gray-600">
-    Configure pricing, materials, and printer settings for your quote engine.
+    Configura precios, materiales e impresoras para tu motor de presupuestos.
   </p>
 </div>
 
@@ -52,35 +52,35 @@ endblock %} {% block content %}
       id="tab-pricing"
       class="tab-btn border-b-2 border-[#ff5733] py-4 px-1 text-sm font-medium text-[#ff5733]"
     >
-      Pricing
+      Precios
     </button>
     <button
       onclick="showTab('materials')"
       id="tab-materials"
       class="tab-btn border-b-2 border-transparent py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300"
     >
-      Materials
+      Materiales
     </button>
     <button
       onclick="showTab('printers')"
       id="tab-printers"
       class="tab-btn border-b-2 border-transparent py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300"
     >
-      Printers
+      Impresoras
     </button>
     <button
       onclick="showTab('postprocessing')"
       id="tab-postprocessing"
       class="tab-btn border-b-2 border-transparent py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300"
     >
-      Post-Processing
+      Postprocesado
     </button>
     <button
       onclick="showTab('advanced')"
       id="tab-advanced"
       class="tab-btn border-b-2 border-transparent py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300"
     >
-      Advanced
+      Avanzado
     </button>
   </nav>
 </div>
@@ -89,13 +89,13 @@ endblock %} {% block content %}
 <div id="pricing-tab" class="tab-content">
   <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
     <h2 class="text-lg font-semibold text-gray-900 mb-4">
-      Pricing Configuration
+      Configuración de precios
     </h2>
 
     <!-- Pricing Mode Toggle -->
     <div class="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
       <label class="block text-sm font-medium text-gray-700 mb-3"
-        >Pricing Mode</label
+        >Modo de precios</label
       >
       <div class="flex items-center space-x-4">
         <label class="flex items-center space-x-2 cursor-pointer">
@@ -106,7 +106,9 @@ endblock %} {% block content %}
             id="pricing_mode_custom"
             class="w-4 h-4 text-[#ff5733] border-gray-300"
           />
-          <span class="text-sm font-medium text-gray-900">Custom Pricing</span>
+          <span class="text-sm font-medium text-gray-900"
+            >Precios personalizados</span
+          >
         </label>
         <label class="flex items-center space-x-2 cursor-pointer">
           <input
@@ -117,14 +119,14 @@ endblock %} {% block content %}
             class="w-4 h-4 text-[#ff5733] border-gray-300"
           />
           <span class="text-sm font-medium text-gray-900"
-            >Per Gram Pricing</span
+            >Precio por gramo</span
           >
         </label>
       </div>
       <p class="mt-2 text-xs text-gray-500">
-        <strong>Custom:</strong> Complex pricing with electricity, depreciation,
-        and markup. <strong>Per Gram:</strong> Simple pricing based on material
-        weight only (price per gram × weight + tax).
+        <strong>Personalizado:</strong> cálculo completo con electricidad,
+        depreciación y margen. <strong>Por gramo:</strong> cálculo simple solo
+        por peso del material (precio por gramo × peso + impuestos).
       </p>
     </div>
 
@@ -140,7 +142,7 @@ endblock %} {% block content %}
           class="w-full px-3 py-2 border border-gray-300 rounded-md"
         />
         <p class="mt-1 text-xs text-gray-500">
-          Fixed cost per print job (setup, handling)
+          Coste fijo por trabajo (preparación, manipulación)
         </p>
       </div>
 
@@ -155,7 +157,7 @@ endblock %} {% block content %}
           class="w-full px-3 py-2 border border-gray-300 rounded-md"
         />
         <p class="mt-1 text-xs text-gray-500">
-          Cost of electricity per kilowatt-hour
+          Coste de electricidad por kilovatio-hora
         </p>
       </div>
 
@@ -169,7 +171,7 @@ endblock %} {% block content %}
           class="w-full px-3 py-2 border border-gray-300 rounded-md"
         />
         <p class="mt-1 text-xs text-gray-500">
-          Average power consumption of 3D printer
+          Consumo medio de la impresora 3D
         </p>
       </div>
 
@@ -183,7 +185,7 @@ endblock %} {% block content %}
           class="w-full px-3 py-2 border border-gray-300 rounded-md"
         />
         <p class="mt-1 text-xs text-gray-500">
-          Machine wear and tear cost per hour
+          Coste por hora de desgaste de la máquina
         </p>
       </div>
 
@@ -197,13 +199,13 @@ endblock %} {% block content %}
           class="w-full px-3 py-2 border border-gray-300 rounded-md"
         />
         <p class="mt-1 text-xs text-gray-500">
-          Miscellaneous operational costs per print
+          Costes operativos varios por impresión
         </p>
       </div>
 
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-2"
-          >GST/Tax Rate (%)</label
+          >IVA/Impuesto (%)</label
         >
         <input
           type="number"
@@ -212,25 +214,27 @@ endblock %} {% block content %}
           class="w-full px-3 py-2 border border-gray-300 rounded-md"
         />
         <p class="mt-1 text-xs text-gray-500">
-          Tax percentage (e.g., 18 for 18%)
+          Porcentaje de impuesto (p. ej., 18 para 18%)
         </p>
       </div>
 
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-2"
-          >Currency</label
+          >Moneda</label
         >
         <input
           type="text"
           id="currency"
           class="w-full px-3 py-2 border border-gray-300 rounded-md"
         />
-        <p class="mt-1 text-xs text-gray-500">Currency code (e.g., INR, USD)</p>
+        <p class="mt-1 text-xs text-gray-500">
+          Código de moneda (p. ej., EUR, USD)
+        </p>
       </div>
 
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-2"
-          >Currency Symbol</label
+          >Símbolo de moneda</label
         >
         <input
           type="text"
@@ -238,12 +242,13 @@ endblock %} {% block content %}
           class="w-full px-3 py-2 border border-gray-300 rounded-md"
         />
         <p class="mt-1 text-xs text-gray-500">
-          Symbol to display (e.g., ₹, €, $)
+          Símbolo a mostrar (p. ej., €, $)
         </p>
       </div>
     </div>
     <p class="mt-4 text-xs text-gray-500 italic">
-      Note: These settings are only used when "Custom Pricing" mode is selected.
+      Nota: estos ajustes solo se usan cuando está seleccionado el modo "Precios
+      personalizados".
     </p>
   </div>
 </div>
@@ -268,7 +273,7 @@ endblock %} {% block content %}
           d="M12 6v6m0 0v6m0-6h6m-6 0H6"
         />
       </svg>
-      <span>Add New Material</span>
+      <span>Añadir material</span>
     </button>
   </div>
   <div class="space-y-6" id="materialsContainer">
@@ -296,7 +301,7 @@ endblock %} {% block content %}
           d="M12 6v6m0 0v6m0-6h6m-6 0H6"
         />
       </svg>
-      <span>Add New Printer</span>
+      <span>Añadir impresora</span>
     </button>
   </div>
   <div class="space-y-6" id="printersContainer">
@@ -324,7 +329,7 @@ endblock %} {% block content %}
           d="M12 6v6m0 0v6m0-6h6m-6 0H6"
         />
       </svg>
-      <span>Add New Post-Processing Option</span>
+      <span>Añadir opción de postprocesado</span>
     </button>
   </div>
   <div class="space-y-6" id="postProcessingContainer">
@@ -335,12 +340,12 @@ endblock %} {% block content %}
 <!-- Advanced Tab -->
 <div id="advanced-tab" class="tab-content hidden">
   <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-    <h2 class="text-lg font-semibold text-gray-900 mb-4">Advanced Settings</h2>
+    <h2 class="text-lg font-semibold text-gray-900 mb-4">Ajustes avanzados</h2>
 
     <div class="space-y-4">
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-2"
-          >PrusaSlicer Path</label
+          >Ruta de PrusaSlicer</label
         >
         <input
           type="text"
@@ -349,13 +354,13 @@ endblock %} {% block content %}
           class="w-full px-3 py-2 border border-gray-300 rounded-md"
         />
         <p class="mt-1 text-xs text-gray-500">
-          Full path to PrusaSlicer executable
+          Ruta completa al ejecutable de PrusaSlicer
         </p>
       </div>
 
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-2"
-          >Slicing Timeout (seconds)</label
+          >Tiempo límite de laminado (segundos)</label
         >
         <input
           type="number"
@@ -363,13 +368,13 @@ endblock %} {% block content %}
           class="w-full px-3 py-2 border border-gray-300 rounded-md"
         />
         <p class="mt-1 text-xs text-gray-500">
-          Maximum time to wait for slicing to complete
+          Tiempo máximo de espera para completar el laminado
         </p>
       </div>
 
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-2"
-          >Max File Size (MB)</label
+          >Tamaño máximo de archivo (MB)</label
         >
         <input
           type="number"
@@ -377,7 +382,7 @@ endblock %} {% block content %}
           class="w-full px-3 py-2 border border-gray-300 rounded-md"
         />
         <p class="mt-1 text-xs text-gray-500">
-          Maximum STL file size allowed for upload
+          Tamaño máximo permitido para subir STL
         </p>
       </div>
     </div>
@@ -390,7 +395,7 @@ endblock %} {% block content %}
     onclick="saveSettings()"
     class="bg-[#ff5733] text-white px-6 py-3 rounded-md hover:bg-[#e63c1a] transition-colors font-medium"
   >
-    <span id="saveText">Save All Settings</span>
+    <span id="saveText">Guardar todos los ajustes</span>
     <span id="saveSpinner" class="hidden">
       <svg
         class="animate-spin h-5 w-5 inline-block"
@@ -411,7 +416,7 @@ endblock %} {% block content %}
           d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
         ></path>
       </svg>
-      Saving...
+      Guardando...
     </span>
   </button>
 </div>
@@ -432,17 +437,17 @@ endblock %} {% block content %}
           ...authHeaders(),
         },
       });
-      if (!response.ok) throw new Error("Failed to load settings");
+      if (!response.ok) throw new Error("No se pudieron cargar los ajustes");
       const data = await response.json();
 
       if (data.success) {
         currentSettings = data.settings;
         populateFields();
       } else {
-        showError("Failed to load settings");
+        showError("No se pudieron cargar los ajustes");
       }
     } catch (error) {
-      showError("Error loading settings: " + error.message);
+      showError("Error al cargar los ajustes: " + error.message);
     }
   }
 
@@ -507,44 +512,44 @@ endblock %} {% block content %}
             <div class="flex justify-between items-start mb-4">
                 <div>
                     <h3 class="text-lg font-semibold text-gray-900">${mat.name}</h3>
-                    <input type="text" data-material="${key}" data-field="name" value="${mat.name}" class="mt-1 px-2 py-1 text-sm border border-gray-300 rounded-md" placeholder="Material name">
+                    <input type="text" data-material="${key}" data-field="name" value="${mat.name}" class="mt-1 px-2 py-1 text-sm border border-gray-300 rounded-md" placeholder="Nombre del material">
                 </div>
                 <button onclick="removeMaterial('${key}')" class="text-red-600 hover:text-red-800 flex items-center space-x-1 text-sm">
                     <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"/>
                     </svg>
-                    <span>Remove</span>
+                    <span>Eliminar</span>
                 </button>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Price per kg (€)</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Precio por kg (€)</label>
                     <input type="number" data-material="${key}" data-field="price_per_kg" value="${mat.price_per_kg}" class="w-full px-3 py-2 border border-gray-300 rounded-md">
-                    <p class="mt-1 text-xs text-gray-500">Used in Custom pricing mode</p>
+                    <p class="mt-1 text-xs text-gray-500">Usado en modo de precios personalizados</p>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Price per gram (€)</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Precio por gramo (€)</label>
                     <input type="number" step="0.01" data-material="${key}" data-field="per_gram_price" value="${mat.per_gram_price || 1.0}" class="w-full px-3 py-2 border border-gray-300 rounded-md">
-                    <p class="mt-1 text-xs text-gray-500">Used in Per Gram pricing mode</p>
+                    <p class="mt-1 text-xs text-gray-500">Usado en modo de precio por gramo</p>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Density (g/cm³)</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Densidad (g/cm³)</label>
                     <input type="number" step="0.01" data-material="${key}" data-field="density_g_cm3" value="${mat.density_g_cm3}" class="w-full px-3 py-2 border border-gray-300 rounded-md">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Bed Temperature (°C)</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Temperatura de cama (°C)</label>
                     <input type="number" data-material="${key}" data-field="bed_temp" value="${mat.bed_temp}" class="w-full px-3 py-2 border border-gray-300 rounded-md">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Extruder Temperature (°C)</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Temperatura del extrusor (°C)</label>
                     <input type="number" data-material="${key}" data-field="extruder_temp" value="${mat.extruder_temp}" class="w-full px-3 py-2 border border-gray-300 rounded-md">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Perimeter Speed (mm/s)</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Velocidad de perímetro (mm/s)</label>
                     <input type="number" data-material="${key}" data-field="perimeter_speed" value="${mat.perimeter_speed}" class="w-full px-3 py-2 border border-gray-300 rounded-md">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Infill Speed (mm/s)</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Velocidad de relleno (mm/s)</label>
                     <input type="number" data-material="${key}" data-field="infill_speed" value="${mat.infill_speed}" class="w-full px-3 py-2 border border-gray-300 rounded-md">
                 </div>
             </div>
@@ -569,18 +574,18 @@ endblock %} {% block content %}
                     <div class="flex items-center justify-between">
                         <div class="flex-1">
                             <h3 class="text-lg font-semibold text-gray-900">${printer.name}</h3>
-                            <input type="text" data-printer="${key}" data-field="name" value="${printer.name}" class="mt-1 px-2 py-1 text-sm border border-gray-300 rounded-md w-full max-w-xs" placeholder="Printer name">
+                            <input type="text" data-printer="${key}" data-field="name" value="${printer.name}" class="mt-1 px-2 py-1 text-sm border border-gray-300 rounded-md w-full max-w-xs" placeholder="Nombre de la impresora">
                         </div>
                         <div class="flex items-center space-x-3">
                             <label class="flex items-center space-x-2">
                                 <input type="checkbox" data-printer="${key}" data-field="enabled" ${printer.enabled ? "checked" : ""} class="w-4 h-4 text-[#ff5733] border-gray-300 rounded">
-                                <span class="text-sm text-gray-700">Enabled</span>
+                              <span class="text-sm text-gray-700">Activo</span>
                             </label>
                             <button onclick="removePrinter('${key}')" class="text-red-600 hover:text-red-800 flex items-center space-x-1 text-sm">
                                 <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"/>
                                 </svg>
-                                <span>Remove</span>
+                                <span>Eliminar</span>
                             </button>
                         </div>
                     </div>
@@ -588,29 +593,29 @@ endblock %} {% block content %}
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Bed Size X (mm)</label>
+                          <label class="block text-sm font-medium text-gray-700 mb-2">Tamaño de cama X (mm)</label>
                     <input type="number" data-printer="${key}" data-field="bed_size_x" value="${printer.bed_size_mm[0]}" class="w-full px-3 py-2 border border-gray-300 rounded-md">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Bed Size Y (mm)</label>
+                          <label class="block text-sm font-medium text-gray-700 mb-2">Tamaño de cama Y (mm)</label>
                     <input type="number" data-printer="${key}" data-field="bed_size_y" value="${printer.bed_size_mm[1]}" class="w-full px-3 py-2 border border-gray-300 rounded-md">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Bed Size Z (mm)</label>
+                          <label class="block text-sm font-medium text-gray-700 mb-2">Tamaño de cama Z (mm)</label>
                     <input type="number" data-printer="${key}" data-field="bed_size_z" value="${printer.bed_size_mm[2]}" class="w-full px-3 py-2 border border-gray-300 rounded-md">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Nozzle Diameter (mm)</label>
+                          <label class="block text-sm font-medium text-gray-700 mb-2">Diámetro de boquilla (mm)</label>
                     <input type="number" step="0.1" data-printer="${key}" data-field="nozzle_diameter_mm" value="${printer.nozzle_diameter_mm}" class="w-full px-3 py-2 border border-gray-300 rounded-md">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Max Print Speed (mm/s)</label>
+                          <label class="block text-sm font-medium text-gray-700 mb-2">Velocidad máx. de impresión (mm/s)</label>
                     <input type="number" data-printer="${key}" data-field="max_print_speed_mm_s" value="${printer.max_print_speed_mm_s}" class="w-full px-3 py-2 border border-gray-300 rounded-md">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Markup Multiplier</label>
+                          <label class="block text-sm font-medium text-gray-700 mb-2">Multiplicador de margen</label>
                     <input type="number" step="0.01" data-printer="${key}" data-field="markup_multiplier" value="${printer.markup_multiplier || 1.3}" class="w-full px-3 py-2 border border-gray-300 rounded-md">
-                    <p class="mt-1 text-xs text-gray-500">Profit margin (1.0 = no markup, 1.3 = 30% markup)</p>
+                          <p class="mt-1 text-xs text-gray-500">Margen de beneficio (1.0 = sin margen, 1.3 = 30% de margen)</p>
                 </div>
             </div>
         `;
@@ -634,18 +639,18 @@ endblock %} {% block content %}
                     <div class="flex items-center justify-between">
                         <div class="flex-1">
                             <h3 class="text-lg font-semibold text-gray-900">${pp.name}</h3>
-                            <input type="text" data-pp="${key}" data-field="name" value="${pp.name}" class="mt-1 px-2 py-1 text-sm border border-gray-300 rounded-md w-full max-w-xs" placeholder="Option name">
+                            <input type="text" data-pp="${key}" data-field="name" value="${pp.name}" class="mt-1 px-2 py-1 text-sm border border-gray-300 rounded-md w-full max-w-xs" placeholder="Nombre de la opción">
                         </div>
                         <div class="flex items-center space-x-3">
                             <label class="flex items-center space-x-2">
                                 <input type="checkbox" data-pp="${key}" data-field="enabled" ${pp.enabled ? "checked" : ""} class="w-4 h-4 text-[#ff5733] border-gray-300 rounded">
-                                <span class="text-sm text-gray-700">Enabled</span>
+                              <span class="text-sm text-gray-700">Activo</span>
                             </label>
                             <button onclick="removePostProcessing('${key}')" class="text-red-600 hover:text-red-800 flex items-center space-x-1 text-sm">
                                 <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"/>
                                 </svg>
-                                <span>Remove</span>
+                                <span>Eliminar</span>
                             </button>
                         </div>
                     </div>
@@ -653,13 +658,13 @@ endblock %} {% block content %}
             </div>
             <div class="grid grid-cols-1 gap-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
-                    <textarea data-pp="${key}" data-field="description" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="Describe this post-processing option">${pp.description || ""}</textarea>
+                          <label class="block text-sm font-medium text-gray-700 mb-2">Descripción</label>
+                          <textarea data-pp="${key}" data-field="description" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="Describe esta opción de postprocesado">${pp.description || ""}</textarea>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Price (€)</label>
+                          <label class="block text-sm font-medium text-gray-700 mb-2">Precio (€)</label>
                     <input type="number" data-pp="${key}" data-field="price" value="${pp.price || 0}" class="w-full px-3 py-2 border border-gray-300 rounded-md">
-                    <p class="mt-1 text-xs text-gray-500">Price per unit for this service</p>
+                          <p class="mt-1 text-xs text-gray-500">Precio por unidad de este servicio</p>
                 </div>
             </div>
         `;
@@ -670,7 +675,7 @@ endblock %} {% block content %}
   function addNewMaterial() {
     const materialKey = "custom_material_" + Date.now();
     const newMaterial = {
-      name: "New Material",
+      name: "Nuevo material",
       price_per_kg: 1000,
       per_gram_price: 1.2,
       density_g_cm3: 1.2,
@@ -678,7 +683,7 @@ endblock %} {% block content %}
       extruder_temp: 200,
       perimeter_speed: 50,
       infill_speed: 80,
-      description: "Custom material",
+      description: "Material personalizado",
     };
 
     if (!currentSettings.materials) {
@@ -687,26 +692,26 @@ endblock %} {% block content %}
 
     currentSettings.materials[materialKey] = newMaterial;
     populateMaterials();
-    showSuccess("New material added. Don't forget to save!");
+    showSuccess("Material añadido. ¡No olvides guardar!");
   }
 
   function removeMaterial(key) {
-    if (confirm("Are you sure you want to remove this material?")) {
+    if (confirm("¿Seguro que quieres eliminar este material?")) {
       delete currentSettings.materials[key];
       populateMaterials();
-      showSuccess("Material removed. Don't forget to save!");
+      showSuccess("Material eliminado. ¡No olvides guardar!");
     }
   }
 
   function addNewPrinter() {
     const printerKey = "custom_printer_" + Date.now();
     const newPrinter = {
-      name: "New Printer",
+      name: "Nueva impresora",
       bed_size_mm: [200, 200, 200],
       nozzle_diameter_mm: 0.4,
       max_print_speed_mm_s: 150,
       enabled: true,
-      description: "Custom printer",
+      description: "Impresora personalizada",
     };
 
     if (!currentSettings.printers) {
@@ -715,22 +720,22 @@ endblock %} {% block content %}
 
     currentSettings.printers[printerKey] = newPrinter;
     populatePrinters();
-    showSuccess("New printer added. Don't forget to save!");
+    showSuccess("Impresora añadida. ¡No olvides guardar!");
   }
 
   function removePrinter(key) {
-    if (confirm("Are you sure you want to remove this printer?")) {
+    if (confirm("¿Seguro que quieres eliminar esta impresora?")) {
       delete currentSettings.printers[key];
       populatePrinters();
-      showSuccess("Printer removed. Don't forget to save!");
+      showSuccess("Impresora eliminada. ¡No olvides guardar!");
     }
   }
 
   function addNewPostProcessing() {
     const ppKey = "custom_pp_" + Date.now();
     const newPP = {
-      name: "New Post-Processing",
-      description: "Custom post-processing service",
+      name: "Nuevo postprocesado",
+      description: "Servicio de postprocesado personalizado",
       price: 500,
       enabled: true,
     };
@@ -741,16 +746,14 @@ endblock %} {% block content %}
 
     currentSettings.post_processing[ppKey] = newPP;
     populatePostProcessing();
-    showSuccess("New post-processing option added. Don't forget to save!");
+    showSuccess("Opción de postprocesado añadida. ¡No olvides guardar!");
   }
 
   function removePostProcessing(key) {
-    if (
-      confirm("Are you sure you want to remove this post-processing option?")
-    ) {
+    if (confirm("¿Seguro que quieres eliminar esta opción de postprocesado?")) {
       delete currentSettings.post_processing[key];
       populatePostProcessing();
-      showSuccess("Post-processing option removed. Don't forget to save!");
+      showSuccess("Opción de postprocesado eliminada. ¡No olvides guardar!");
     }
   }
 
@@ -850,17 +853,17 @@ endblock %} {% block content %}
         headers: { "Content-Type": "application/json", ...authHeaders() },
         body: JSON.stringify(newSettings),
       });
-      if (!response.ok) throw new Error("Failed to save settings");
+      if (!response.ok) throw new Error("No se pudieron guardar los ajustes");
       const data = await response.json();
 
       if (data.success) {
         currentSettings = newSettings;
-        showSuccess("Settings saved successfully!");
+        showSuccess("¡Ajustes guardados correctamente!");
       } else {
-        throw new Error(data.error || "Failed to save settings");
+        throw new Error(data.error || "No se pudieron guardar los ajustes");
       }
     } catch (error) {
-      showError("Error saving settings: " + error.message);
+      showError("Error al guardar los ajustes: " + error.message);
     } finally {
       hideSaving();
     }

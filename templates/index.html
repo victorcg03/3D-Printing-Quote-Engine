@@ -1,4 +1,4 @@
-{% extends "base.html" %} {% block title %}3D Printing Quote Engine - Machine
+{% extends "base.html" %} {% block title %}Cotizador de impresión 3D - Machine
 Shop Suite{% endblock %} {% block extra_head %}
 <!-- Three.js for STL preview -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -10,17 +10,17 @@ Shop Suite{% endblock %} {% block extra_head %}
   <div class="space-y-6">
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
       <h2 class="text-2xl font-bold text-gray-900 mb-6">
-        Get Your 3D Printing Quote
+        Obtén tu presupuesto de impresión 3D
       </h2>
 
       <!-- File Upload -->
       <div class="mb-6">
         <div class="flex items-center justify-between mb-2">
           <label class="text-sm font-medium text-gray-700"
-            >Upload STL Files</label
+            >Subir archivos STL</label
           >
           <span class="bg-[#ff5733] text-white text-xs px-2 py-1 rounded-full"
-            >Multi-File Support</span
+            >Soporte multiarchivo</span
           >
         </div>
         <div
@@ -41,13 +41,13 @@ Shop Suite{% endblock %} {% block extra_head %}
             />
           </svg>
           <p class="mt-2 text-sm font-semibold text-gray-700">
-            Click to upload or drag and drop
+            Haz clic para subir o arrastra y suelta
           </p>
           <p class="text-xs text-gray-500 mt-1">
-            STL files only (max 100MB each)
+            Solo archivos STL (máx. 100 MB cada uno)
           </p>
           <p class="text-xs text-[#ff5733] font-medium mt-2">
-            📦 Upload multiple files at once!
+            📦 ¡Sube varios archivos a la vez!
           </p>
           <input
             type="file"
@@ -63,13 +63,13 @@ Shop Suite{% endblock %} {% block extra_head %}
       <div id="filesList" class="mb-6 hidden">
         <div class="flex justify-between items-center mb-3">
           <h3 class="text-sm font-medium text-gray-700">
-            Uploaded Files (<span id="fileCount">0</span>)
+            Archivos subidos (<span id="fileCount">0</span>)
           </h3>
           <button
             onclick="clearAllFiles()"
             class="text-xs text-red-600 hover:text-red-800"
           >
-            Clear All
+            Borrar todo
           </button>
         </div>
         <div id="filesContainer" class="space-y-3 max-h-64 overflow-y-auto">
@@ -88,11 +88,11 @@ Shop Suite{% endblock %} {% block extra_head %}
           />
           <div>
             <span class="text-sm font-medium text-gray-900"
-              >Use same settings for all files</span
+              >Usar los mismos ajustes para todos los archivos</span
             >
             <p class="text-xs text-gray-600 mt-1">
-              When checked: Apply settings above to all files. Unchecked:
-              Configure each file individually.
+              Marcado: aplica los ajustes de arriba a todos los archivos.
+              Desmarcado: configura cada archivo de forma individual.
             </p>
           </div>
         </label>
@@ -101,19 +101,19 @@ Shop Suite{% endblock %} {% block extra_head %}
       <!-- Global Settings Section -->
       <div id="globalSettingsSection">
         <h3 class="text-lg font-semibold text-gray-900 mb-4">
-          Global Settings
+          Ajustes globales
         </h3>
 
         <!-- Printer Selection -->
         <div class="mb-6">
           <label class="block text-sm font-medium text-gray-700 mb-2"
-            >Printer</label
+            >Impresora</label
           >
           <select
             id="printer"
             class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-[#ff5733] focus:border-[#ff5733]"
           >
-            <option value="">Select printer...</option>
+            <option value="">Selecciona impresora...</option>
             {% for key, printer in printers.items() %}
             <option
               value="{{ key }}"
@@ -131,7 +131,7 @@ Shop Suite{% endblock %} {% block extra_head %}
             {% endfor %}
           </select>
           <p id="printerDesc" class="mt-1 text-xs text-gray-500">
-            Nozzle: 0.4mm, Max Speed: 200mm/s
+            Boquilla: 0.4mm, Velocidad máx.: 200mm/s
           </p>
         </div>
 
@@ -144,7 +144,7 @@ Shop Suite{% endblock %} {% block extra_head %}
             id="material"
             class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-[#ff5733] focus:border-[#ff5733]"
           >
-            <option value="">Select material...</option>
+            <option value="">Selecciona material...</option>
             {% for key, mat in materials.items() %}
             <option value="{{ key }}" {% if key="" ="pla" %}selected{% endif %}>
               {{ mat.name }} - {{ mat.price_per_kg }}€/kg
@@ -152,20 +152,20 @@ Shop Suite{% endblock %} {% block extra_head %}
             {% endfor %}
           </select>
           <p id="materialDesc" class="mt-1 text-xs text-gray-500">
-            Density: 1.24 g/cm³, Temp: 215°C/55°C
+            Densidad: 1.24 g/cm³, Temp.: 215°C/55°C
           </p>
         </div>
 
         <!-- Print Quality -->
         <div class="mb-6">
           <label class="block text-sm font-medium text-gray-700 mb-2"
-            >Print Quality</label
+            >Calidad de impresión</label
           >
           <select
             id="quality"
             class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-[#ff5733] focus:border-[#ff5733]"
           >
-            <option value="">Select quality...</option>
+            <option value="">Selecciona calidad...</option>
             {% for key, qual in qualities.items() %}
             <option
               value="{{ key }}"
@@ -182,17 +182,17 @@ Shop Suite{% endblock %} {% block extra_head %}
             {% endfor %}
           </select>
           <p id="qualityDesc" class="mt-1 text-xs text-gray-500">
-            Layer height: 0.2mm - Balanced quality & speed
+            Altura de capa: 0.2mm - Calidad y velocidad equilibradas
           </p>
         </div>
 
         <!-- Infill Density -->
         <div class="mb-6">
           <label class="block text-sm font-medium text-gray-700 mb-2">
-            Infill Density:
+            Densidad de relleno:
             <span id="infillValue" class="text-[#ff5733] font-bold">20%</span>
             <span id="infillStrength" class="text-xs text-gray-500"
-              >(Light)</span
+              >(Ligero)</span
             >
           </label>
           <input
@@ -204,19 +204,19 @@ Shop Suite{% endblock %} {% block extra_head %}
             class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
           />
           <div class="flex justify-between text-xs text-gray-500 mt-1">
-            <span>5% (Decorative)</span>
-            <span>50% (Standard)</span>
-            <span>100% (Maximum)</span>
+            <span>5% (Decorativo)</span>
+            <span>50% (Estándar)</span>
+            <span>100% (Máximo)</span>
           </div>
           <p class="mt-1 text-xs text-gray-500">
-            Higher infill = stronger but uses more material & time
+            Más relleno = más resistencia, pero usa más material y tiempo
           </p>
         </div>
 
         <!-- Quantity -->
         <div class="mb-6">
           <label class="block text-sm font-medium text-gray-700 mb-2"
-            >Quantity (per file)</label
+            >Cantidad (por archivo)</label
           >
           <input
             type="number"
@@ -236,23 +236,25 @@ Shop Suite{% endblock %} {% block extra_head %}
               id="support"
               class="w-4 h-4 text-[#ff5733] border-gray-300 rounded focus:ring-[#ff5733]"
             />
-            <span class="text-sm text-gray-700">Add support material</span>
+            <span class="text-sm text-gray-700"
+              >Añadir material de soporte</span
+            >
           </label>
         </div>
 
         <!-- Post-Processing -->
         <div class="mb-6">
           <label class="block text-sm font-medium text-gray-700 mb-2"
-            >Post-Processing (Optional)</label
+            >Postprocesado (opcional)</label
           >
           <select
             id="postProcessing"
             class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-[#ff5733] focus:border-[#ff5733]"
           >
-            <option value="">None</option>
+            <option value="">Ninguno</option>
           </select>
           <p id="postProcessingDesc" class="mt-1 text-xs text-gray-500">
-            Additional finishing services
+            Servicios de acabado adicionales
           </p>
         </div>
       </div>
@@ -263,7 +265,7 @@ Shop Suite{% endblock %} {% block extra_head %}
         class="w-full bg-[#ff5733] text-white py-3 px-4 rounded-md hover:bg-[#e63c1a] transition-colors font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
         disabled
       >
-        <span id="btnText">Upload STL files to calculate</span>
+        <span id="btnText">Sube archivos STL para calcular</span>
         <span id="btnSpinner" class="hidden">
           <svg
             class="animate-spin h-5 w-5 inline-block"
@@ -284,7 +286,7 @@ Shop Suite{% endblock %} {% block extra_head %}
               d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
             ></path>
           </svg>
-          Processing...
+          Procesando...
         </span>
       </button>
 
@@ -303,10 +305,10 @@ Shop Suite{% endblock %} {% block extra_head %}
             />
           </svg>
           <div class="text-xs text-green-800">
-            <p class="font-medium">Sequential Processing</p>
+            <p class="font-medium">Procesamiento secuencial</p>
             <p class="mt-1">
-              Files are processed one-by-one to prevent server overload. You'll
-              see real-time progress for each file.
+              Los archivos se procesan uno a uno para evitar sobrecargar el
+              servidor. Verás el progreso en tiempo real de cada archivo.
             </p>
           </div>
         </div>
@@ -319,19 +321,19 @@ Shop Suite{% endblock %} {% block extra_head %}
     <!-- 3D Preview -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
       <div class="flex items-center justify-between mb-4">
-        <h3 class="text-lg font-semibold text-gray-900">3D Preview</h3>
+        <h3 class="text-lg font-semibold text-gray-900">Vista previa 3D</h3>
         <div class="flex items-center space-x-2">
           <button
             id="previewAll"
             class="text-xs px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded transition-colors"
           >
-            View All
+            Ver todos
           </button>
           <button
             id="resetCamera"
             class="text-xs px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded transition-colors"
           >
-            Reset Camera
+            Reiniciar cámara
           </button>
         </div>
       </div>
@@ -353,9 +355,11 @@ Shop Suite{% endblock %} {% block extra_head %}
               d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
             />
           </svg>
-          <p class="text-gray-400 text-sm">Upload STL files to preview</p>
+          <p class="text-gray-400 text-sm">
+            Sube archivos STL para previsualizar
+          </p>
           <p class="text-gray-400 text-xs mt-1">
-            Drag to rotate • Scroll to zoom
+            Arrastra para rotar • Rueda para zoom
           </p>
         </div>
       </div>
@@ -364,7 +368,7 @@ Shop Suite{% endblock %} {% block extra_head %}
           id="previewFileSelect"
           class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-[#ff5733] focus:border-[#ff5733]"
         >
-          <option value="all">View All Files</option>
+          <option value="all">Ver todos los archivos</option>
         </select>
       </div>
     </div>
@@ -374,18 +378,20 @@ Shop Suite{% endblock %} {% block extra_head %}
       id="queueStatus"
       class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hidden"
     >
-      <h3 class="text-lg font-semibold text-gray-900 mb-4">Processing Queue</h3>
+      <h3 class="text-lg font-semibold text-gray-900 mb-4">
+        Cola de procesamiento
+      </h3>
       <div class="space-y-3">
         <div class="flex justify-between text-sm">
-          <span class="text-gray-600">Files in queue:</span>
+          <span class="text-gray-600">Archivos en cola:</span>
           <span id="queueCount" class="font-medium">0</span>
         </div>
         <div class="flex justify-between text-sm">
-          <span class="text-gray-600">Currently processing:</span>
+          <span class="text-gray-600">Procesando ahora:</span>
           <span id="currentFile" class="font-medium text-[#ff5733]">-</span>
         </div>
         <div class="flex justify-between text-sm">
-          <span class="text-gray-600">Progress:</span>
+          <span class="text-gray-600">Progreso:</span>
           <span id="queueProgress" class="font-medium">0/0</span>
         </div>
       </div>
@@ -411,35 +417,35 @@ Shop Suite{% endblock %} {% block extra_head %}
       class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hidden"
     >
       <div class="flex items-center justify-between mb-4">
-        <h3 class="text-lg font-semibold text-gray-900">Combined Total</h3>
+        <h3 class="text-lg font-semibold text-gray-900">Total combinado</h3>
         <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded"
-          >Batch Quote</span
+          >Presupuesto por lote</span
         >
       </div>
 
       <div class="space-y-2 text-sm mb-4">
         <div class="flex justify-between">
-          <span class="text-gray-600">Total Files:</span>
+          <span class="text-gray-600">Archivos totales:</span>
           <span id="totalFiles" class="font-medium">0</span>
         </div>
         <div class="flex justify-between">
-          <span class="text-gray-600">Total Weight:</span>
+          <span class="text-gray-600">Peso total:</span>
           <span id="totalWeight" class="font-medium">0g</span>
         </div>
         <div class="flex justify-between">
-          <span class="text-gray-600">Total Print Time:</span>
+          <span class="text-gray-600">Tiempo total de impresión:</span>
           <span id="totalTime" class="font-medium">0h</span>
         </div>
       </div>
 
       <div class="border-t border-gray-200 pt-3 mb-4">
         <div class="flex justify-between text-sm">
-          <span class="text-gray-600">Total Before Tax:</span>
+          <span class="text-gray-600">Total antes de impuestos:</span>
           <span id="combinedBeforeTax" class="font-medium">0.00€</span>
         </div>
         <div class="flex justify-between text-sm mt-2">
           <span class="text-gray-600"
-            >GST (<span id="combinedGstRate">18</span>%):</span
+            >IVA (<span id="combinedGstRate">18</span>%):</span
           >
           <span id="combinedGstAmount" class="font-medium">0.00€</span>
         </div>
@@ -447,7 +453,7 @@ Shop Suite{% endblock %} {% block extra_head %}
 
       <div class="bg-orange-50 rounded-md p-4 border border-orange-200">
         <div class="flex justify-between items-center">
-          <span class="text-lg font-semibold text-gray-900">Grand Total:</span>
+          <span class="text-lg font-semibold text-gray-900">Total final:</span>
           <span id="grandTotal" class="text-2xl font-bold text-[#ff5733]"
             >0.00€</span
           >
@@ -456,8 +462,8 @@ Shop Suite{% endblock %} {% block extra_head %}
 
       <div class="mt-4 text-xs text-gray-500">
         <p>
-          * Prices are indicative and may vary based on actual printing
-          conditions
+          * Los precios son orientativos y pueden variar según las condiciones
+          reales de impresión
         </p>
       </div>
     </div>
@@ -506,7 +512,7 @@ Shop Suite{% endblock %} {% block extra_head %}
         config = data.config;
       }
     } catch (error) {
-      console.error("Error loading config:", error);
+      console.error("Error cargando la configuración:", error);
     }
   }
 
@@ -526,7 +532,7 @@ Shop Suite{% endblock %} {% block extra_head %}
   // Populate post-processing dropdown
   function populatePostProcessingDropdown() {
     const select = document.getElementById("postProcessing");
-    select.innerHTML = '<option value="">None</option>';
+    select.innerHTML = '<option value="">Ninguno</option>';
 
     const postProcessing = config.post_processing || {};
     for (const [key, pp] of Object.entries(postProcessing)) {
@@ -662,7 +668,7 @@ Shop Suite{% endblock %} {% block extra_head %}
 
           resolve(mesh);
         } catch (error) {
-          console.error("Error loading STL:", error);
+          console.error("Error cargando el STL:", error);
           resolve(null);
         }
       };
@@ -757,7 +763,7 @@ Shop Suite{% endblock %} {% block extra_head %}
     // Hide file selector
     document.getElementById("previewFileSelector").classList.add("hidden");
     document.getElementById("previewFileSelect").innerHTML =
-      '<option value="all">View All Files</option>';
+      '<option value="all">Ver todos los archivos</option>';
   }
 
   function setupEventListeners() {
@@ -795,7 +801,7 @@ Shop Suite{% endblock %} {% block extra_head %}
       const prn = config.printers?.[printer.value];
       if (prn) {
         document.getElementById("printerDesc").textContent =
-          `Nozzle: ${prn.nozzle_diameter_mm}mm, Max Speed: ${prn.max_print_speed_mm_s}mm/s`;
+          `Boquilla: ${prn.nozzle_diameter_mm}mm, Velocidad máx.: ${prn.max_print_speed_mm_s}mm/s`;
       } else {
         document.getElementById("printerDesc").textContent = "";
       }
@@ -807,7 +813,7 @@ Shop Suite{% endblock %} {% block extra_head %}
       const mat = config.materials?.[material.value];
       if (mat) {
         document.getElementById("materialDesc").textContent =
-          `Density: ${mat.density_g_cm3} g/cm³, Temp: ${mat.extruder_temp}°C/${mat.bed_temp}°C`;
+          `Densidad: ${mat.density_g_cm3} g/cm³, Temp.: ${mat.extruder_temp}°C/${mat.bed_temp}°C`;
       } else {
         document.getElementById("materialDesc").textContent = "";
       }
@@ -823,7 +829,7 @@ Shop Suite{% endblock %} {% block extra_head %}
           `${pp.description} - ${pp.price}€`;
       } else {
         document.getElementById("postProcessingDesc").textContent =
-          "Additional finishing services";
+          "Servicios de acabado adicionales";
       }
     });
 
@@ -832,13 +838,14 @@ Shop Suite{% endblock %} {% block extra_head %}
       const qual = config.print_qualities?.[quality.value];
       if (qual) {
         const descriptions = {
-          draft: "Layer height: 0.3mm - Fast printing, lower detail",
-          standard: "Layer height: 0.2mm - Balanced quality & speed",
-          fine: "Layer height: 0.15mm - High detail, slower",
-          ultra_fine: "Layer height: 0.1mm - Maximum detail, very slow",
+          draft: "Altura de capa: 0.3mm - Impresión rápida, menos detalle",
+          standard: "Altura de capa: 0.2mm - Calidad y velocidad equilibradas",
+          fine: "Altura de capa: 0.15mm - Alto detalle, más lento",
+          ultra_fine: "Altura de capa: 0.1mm - Máximo detalle, muy lento",
         };
         document.getElementById("qualityDesc").textContent =
-          descriptions[quality.value] || `Layer height: ${qual.layer_height}mm`;
+          descriptions[quality.value] ||
+          `Altura de capa: ${qual.layer_height}mm`;
       } else {
         document.getElementById("qualityDesc").textContent = "";
       }
@@ -852,12 +859,12 @@ Shop Suite{% endblock %} {% block extra_head %}
 
       // Update strength label
       let strength = "";
-      if (val < 15) strength = "(Decorative only)";
-      else if (val < 25) strength = "(Light)";
-      else if (val < 40) strength = "(Moderate)";
-      else if (val < 60) strength = "(Strong)";
-      else if (val < 80) strength = "(Very Strong)";
-      else strength = "(Maximum Strength)";
+      if (val < 15) strength = "(Solo decorativo)";
+      else if (val < 25) strength = "(Ligero)";
+      else if (val < 40) strength = "(Moderado)";
+      else if (val < 60) strength = "(Resistente)";
+      else if (val < 80) strength = "(Muy resistente)";
+      else strength = "(Resistencia máxima)";
 
       document.getElementById("infillStrength").textContent = strength;
     });
@@ -878,13 +885,13 @@ Shop Suite{% endblock %} {% block extra_head %}
     );
 
     if (validFiles.length === 0) {
-      showError("Please upload STL files only");
+      showError("Por favor, sube solo archivos STL");
       return;
     }
 
     if (files.length !== validFiles.length) {
       showError(
-        `${files.length - validFiles.length} file(s) skipped - only STL files are accepted`,
+        `${files.length - validFiles.length} archivo(s) omitido(s) — solo se aceptan archivos STL`,
       );
     }
 
@@ -927,7 +934,7 @@ Shop Suite{% endblock %} {% block extra_head %}
     }
 
     // Clear and rebuild options
-    select.innerHTML = '<option value="all">View All Files</option>';
+    select.innerHTML = '<option value="all">Ver todos los archivos</option>';
 
     loadedMeshes.forEach((item) => {
       const option = document.createElement("option");
@@ -1024,7 +1031,7 @@ Shop Suite{% endblock %} {% block extra_head %}
                     </div>
                     <div class="grid grid-cols-2 gap-2 text-xs">
                         <select data-file="${fileObj.id}" data-field="printer" class="px-2 py-1 border border-gray-300 rounded">
-                            <option value="">Printer...</option>
+                            <option value="">Impresora...</option>
                             ${Object.entries(config.printers || {})
                               .map(
                                 ([key, p]) =>
@@ -1042,7 +1049,7 @@ Shop Suite{% endblock %} {% block extra_head %}
                               .join("")}
                         </select>
                         <select data-file="${fileObj.id}" data-field="quality" class="px-2 py-1 border border-gray-300 rounded">
-                            <option value="">Quality...</option>
+                            <option value="">Calidad...</option>
                             ${Object.entries(config.print_qualities || {})
                               .map(
                                 ([key, q]) =>
@@ -1050,14 +1057,14 @@ Shop Suite{% endblock %} {% block extra_head %}
                               )
                               .join("")}
                         </select>
-                        <input type="number" data-file="${fileObj.id}" data-field="infill" placeholder="Infill %" min="5" max="100" value="20" class="px-2 py-1 border border-gray-300 rounded">
+                        <input type="number" data-file="${fileObj.id}" data-field="infill" placeholder="Relleno %" min="5" max="100" value="20" class="px-2 py-1 border border-gray-300 rounded">
                         <label class="col-span-2 flex items-center space-x-1">
                             <input type="checkbox" data-file="${fileObj.id}" data-field="support" class="w-3 h-3">
-                            <span>Support</span>
+                            <span>Soporte</span>
                         </label>
-                        <input type="number" data-file="${fileObj.id}" data-field="quantity" placeholder="Qty" min="1" value="1" class="px-2 py-1 border border-gray-300 rounded">
+                        <input type="number" data-file="${fileObj.id}" data-field="quantity" placeholder="Cant." min="1" value="1" class="px-2 py-1 border border-gray-300 rounded">
                         <select data-file="${fileObj.id}" data-field="post_processing" class="col-span-2 px-2 py-1 border border-gray-300 rounded text-xs">
-                            <option value="">Post-Processing: None</option>
+                            <option value="">Postprocesado: Ninguno</option>
                             ${Object.entries(config.post_processing || {})
                               .map(
                                 ([key, pp]) =>
@@ -1082,7 +1089,7 @@ Shop Suite{% endblock %} {% block extra_head %}
 
     if (!hasFiles) {
       btn.disabled = true;
-      btnText.textContent = "Upload STL files to calculate";
+      btnText.textContent = "Sube archivos STL para calcular";
       return;
     }
 
@@ -1093,14 +1100,14 @@ Shop Suite{% endblock %} {% block extra_head %}
       console.log(hasPrinter, hasMaterial, hasQuality);
       if (hasPrinter && hasMaterial && hasQuality) {
         btn.disabled = false;
-        btnText.textContent = `Process ${uploadedFiles.length} file(s)`;
+        btnText.textContent = `Procesar ${uploadedFiles.length} archivo(s)`;
       } else {
         btn.disabled = true;
-        btnText.textContent = "Configure global settings";
+        btnText.textContent = "Configura los ajustes globales";
       }
     } else {
       btn.disabled = false;
-      btnText.textContent = `Process ${uploadedFiles.length} file(s)`;
+      btnText.textContent = `Procesar ${uploadedFiles.length} archivo(s)`;
     }
   }
 
@@ -1208,7 +1215,7 @@ Shop Suite{% endblock %} {% block extra_head %}
         const sliceData = await sliceResponse.json();
 
         if (!sliceData.success) {
-          throw new Error(sliceData.error || "Slicing failed");
+          throw new Error(sliceData.error || "Falló el laminado");
         }
 
         // Step 2: Calculate quote
@@ -1230,7 +1237,9 @@ Shop Suite{% endblock %} {% block extra_head %}
         const quoteData = await quoteResponse.json();
 
         if (!quoteData.success) {
-          throw new Error(quoteData.error || "Quote calculation failed");
+          throw new Error(
+            quoteData.error || "Falló el cálculo del presupuesto",
+          );
         }
 
         // Store result
@@ -1290,19 +1299,19 @@ Shop Suite{% endblock %} {% block extra_head %}
         </div>
         <div class="grid grid-cols-2 gap-2 text-xs text-gray-600">
             <div class="flex justify-between bg-gray-50 px-2 py-1 rounded">
-                <span class="font-medium">Weight:</span>
+              <span class="font-medium">Peso:</span>
                 <span>${result.sliceData.filament_weight_g}g</span>
             </div>
             <div class="flex justify-between bg-gray-50 px-2 py-1 rounded">
-                <span class="font-medium">Time:</span>
+              <span class="font-medium">Tiempo:</span>
                 <span>${result.sliceData.estimated_time_hours}h</span>
             </div>
             <div class="flex justify-between bg-gray-50 px-2 py-1 rounded">
-                <span class="font-medium">Quantity:</span>
+              <span class="font-medium">Cantidad:</span>
                 <span>${b.quantity}x</span>
             </div>
             <div class="flex justify-between bg-gray-50 px-2 py-1 rounded">
-                <span class="font-medium">Material:</span>
+              <span class="font-medium">Material:</span>
                 <span>${result.quote.print_details.material_name}</span>
             </div>
         </div>

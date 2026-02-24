@@ -36,7 +36,7 @@ def convert_stl_to_gcode(input_path, output_path, params, slicer_path):
     try:
         # Check if slicer exists
         if not os.path.exists(slicer_path):
-            return False, f"PrusaSlicer not found at: {slicer_path}"
+            return False, f"No se encontró PrusaSlicer en: {slicer_path}"
 
         # Build PrusaSlicer command
         cmd = [
@@ -66,19 +66,19 @@ def convert_stl_to_gcode(input_path, output_path, params, slicer_path):
         )
 
         if result.returncode != 0:
-            error_msg = result.stderr if result.stderr else "Unknown slicing error"
-            return False, f"Slicing failed: {error_msg}"
+            error_msg = result.stderr if result.stderr else "Error de laminado desconocido"
+            return False, f"Falló el laminado: {error_msg}"
 
         # Check if output file was created
         if not os.path.exists(output_path):
-            return False, "G-code file was not created"
+            return False, "No se creó el archivo G-code"
 
         return True, None
 
     except subprocess.TimeoutExpired:
-        return False, "Slicing timeout - file may be too complex"
+        return False, "Tiempo de espera del laminado agotado: el archivo puede ser demasiado complejo"
     except Exception as e:
-        return False, f"Slicing error: {str(e)}"
+        return False, f"Error de laminado: {str(e)}"
 
 
 def extract_filament_usage(gcode_path):
@@ -197,7 +197,7 @@ def extract_filament_usage(gcode_path):
             'filament_weight_g': 3.0,
             'estimated_time_seconds': 3600,
             'estimated_time_hours': 1.0,
-            'warning': f'Using estimated values. Parse error: {str(e)}'
+            'warning': f'Usando valores estimados. Error de análisis: {str(e)}'
         }
 
 

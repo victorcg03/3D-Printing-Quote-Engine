@@ -15,6 +15,8 @@ from utils import allowed_file, convert_stl_to_gcode, extract_filament_usage
 
 ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN")
 
+ERR_NOT_FOUND = "No encontrado"
+
 def require_admin():
     if not ADMIN_TOKEN:
         return True
@@ -58,7 +60,7 @@ def validate_quote_params(params: dict) -> dict:
     Lanza ValueError con mensaje si no cuadra.
     """
     if not isinstance(params, dict):
-        raise ValueError("params must be an object")
+        raise ValueError("params debe ser un objeto")
 
     material = (params.get("material") or "").strip().lower()
     quality = (params.get("quality") or "").strip().lower()
@@ -69,28 +71,28 @@ def validate_quote_params(params: dict) -> dict:
     try:
         qty = int(qty_raw)
     except Exception:
-        raise ValueError("qty must be an integer")
+        raise ValueError("qty debe ser un entero")
     if qty < 1:
-        raise ValueError("qty must be >= 1")
+        raise ValueError("qty debe ser >= 1")
 
     # infill_density opcional
     infill_raw = params.get("infill_density", 20)
     try:
         infill_density = int(infill_raw)
     except Exception:
-        raise ValueError("infill_density must be an integer")
+        raise ValueError("infill_density debe ser un entero")
     if infill_density < 5 or infill_density > 100:
-        raise ValueError("infill_density must be between 5 and 100")
+        raise ValueError("infill_density debe estar entre 5 y 100")
 
     if not material or not config.get_material(material):
-        raise ValueError(f"invalid material: {material or '(empty)'}")
+        raise ValueError(f"material inválido: {material or '(vacío)'}")
 
     if not quality or not config.get("print_quality", quality):
-        raise ValueError(f"invalid quality: {quality or '(empty)'}")
+        raise ValueError(f"calidad inválida: {quality or '(vacío)'}")
 
     # printer debe existir y estar enabled
     if not config.get_printer(printer) or not _is_enabled_printer(printer):
-        raise ValueError(f"invalid or disabled printer: {printer}")
+        raise ValueError(f"impresora inválida o deshabilitada: {printer}")
 
     # devuelve params normalizados
     return {
@@ -122,7 +124,7 @@ def index():
 
 @app.errorhandler(401)
 def unauthorized(_):
-    return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+    return jsonify({'success': False, 'error': 'No autorizado'}), 401
 
 @app.route('/settings')
 def settings_page():
@@ -153,7 +155,7 @@ def get_config():
         })
     except Exception as e:
         app.logger.error(f"Error getting config: {str(e)}")
-        return jsonify({'success': False, 'error': 'Failed to load configuration'}), 500
+        return jsonify({'success': False, 'error': 'No se pudo cargar la configuración'}), 500
 
 
 @app.route('/api/materials', methods=['GET'])
@@ -175,14 +177,14 @@ def analyze_stl():
     """
     # Validate file upload
     if 'file' not in request.files:
-        return jsonify({'success': False, 'error': 'No file uploaded'}), 400
+        return jsonify({'success': False, 'error': 'No se subió ningún archivo'}), 400
 
     file = request.files['file']
     if not file or file.filename == '':
-        return jsonify({'success': False, 'error': 'No file selected'}), 400
+        return jsonify({'success': False, 'error': 'No se seleccionó ningún archivo'}), 400
 
     if not allowed_file(file.filename):
-        return jsonify({'success': False, 'error': 'Invalid file type. Only STL files are allowed.'}), 400
+        return jsonify({'success': False, 'error': 'Tipo de archivo no válido. Solo se permiten archivos STL.'}), 400
 
     # Get parameters
     material = request.form.get('material', 'pla').lower()
@@ -194,23 +196,23 @@ def analyze_stl():
     # Validate material
     material_config = config.get_material(material)
     if not material_config:
-        return jsonify({'success': False, 'error': f'Invalid material: {material}'}), 400
+        return jsonify({'success': False, 'error': f'Material inválido: {material}'}), 400
 
     # Validate quality
     quality_config = config.get('print_quality', quality)
     if not quality_config:
-        return jsonify({'success': False, 'error': f'Invalid quality: {quality}'}), 400
+        return jsonify({'success': False, 'error': f'Calidad inválida: {quality}'}), 400
 
     # Validate printer
     printer_config = config.get_printer(printer)
     if not printer_config:
-        return jsonify({'success': False, 'error': f'Invalid printer: {printer}'}), 400
+        return jsonify({'success': False, 'error': f'Impresora inválida: {printer}'}), 400
 
     # Validate infill
     try:
         infill_density = max(5, min(100, int(infill_density)))
     except ValueError:
-        return jsonify({'success': False, 'error': 'Invalid infill density'}), 400
+        return jsonify({'success': False, 'error': 'Densidad de relleno no válida'}), 400
 
     # Prepare slicing parameters
     params = {
@@ -259,7 +261,7 @@ def analyze_stl():
 
     except Exception as e:
         app.logger.error(f"Error processing STL: {str(e)}")
-        return jsonify({'success': False, 'error': f'Processing failed: {str(e)}'}), 500
+        return jsonify({'success': False, 'error': f'El procesamiento falló: {str(e)}'}), 500
 
     finally:
         # Clean up temporary files
@@ -300,9 +302,9 @@ def calculate_quote():
         pricing_mode = config.get_pricing_mode()
 
         if not material_config:
-            return jsonify({'success': False, 'error': 'Invalid material'}), 400
+            return jsonify({'success': False, 'error': 'Material inválido'}), 400
         if not printer_config:
-            return jsonify({'success': False, 'error': 'Invalid printer'}), 400
+            return jsonify({'success': False, 'error': 'Impresora inválida'}), 400
 
         # Currency
         currency = pricing_config.get('currency', 'EUR')
@@ -471,7 +473,7 @@ def calculate_quote():
 
     except Exception as e:
         app.logger.error(f"Error calculating quote: {str(e)}")
-        return jsonify({'success': False, 'error': f'Calculation failed: {str(e)}'}), 500
+        return jsonify({'success': False, 'error': f'Falló el cálculo del presupuesto: {str(e)}'}), 500
 
 
 @app.route('/api/settings', methods=['GET', 'POST'])
@@ -482,7 +484,7 @@ def manage_settings():
     POST: Update settings
     """
     if not require_admin():
-        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+        return jsonify({'success': False, 'error': 'No autorizado'}), 401
     if request.method == 'GET':
         try:
             return jsonify({
@@ -503,9 +505,9 @@ def manage_settings():
             # Save to file
             if config.save():
                 app.logger.info("Settings updated successfully")
-                return jsonify({'success': True, 'message': 'Settings updated successfully'})
+                return jsonify({'success': True, 'message': 'Ajustes actualizados correctamente'})
             else:
-                return jsonify({'success': False, 'error': 'Failed to save settings'}), 500
+                return jsonify({'success': False, 'error': 'No se pudieron guardar los ajustes'}), 500
 
         except Exception as e:
             app.logger.error(f"Error updating settings: {str(e)}")
@@ -548,11 +550,11 @@ def create_quote():
         return jsonify({"success": False, "error": str(ve)}), 400
     except Exception as e:
         app.logger.error(f"Error creating quote: {str(e)}")
-        return jsonify({"success": False, "error": "Failed to create quote"}), 500
+        return jsonify({"success": False, "error": "No se pudo crear el presupuesto"}), 500
 @app.route("/api/quotes", methods=["GET"])
 def list_quotes():
     if not require_admin():
-        return jsonify({"success": False, "error": "Unauthorized"}), 401
+        return jsonify({"success": False, "error": "No autorizado"}), 401
 
     try:
         # paginación simple
@@ -587,13 +589,13 @@ def list_quotes():
 
     except Exception as e:
         app.logger.error(f"Error listing quotes: {str(e)}")
-        return jsonify({"success": False, "error": "Failed to list quotes"}), 500
+        return jsonify({"success": False, "error": "No se pudieron listar los presupuestos"}), 500
     
 @app.route("/api/quotes/<quote_id>", methods=["GET"])
 def get_quote(quote_id: str):
     quote = quotes_store.load(quote_id)
     if not quote:
-        return jsonify({"success": False, "error": "Not found"}), 404
+        return jsonify({"success": False, "error": ERR_NOT_FOUND}), 404
 
     # expira
     if quotes_store.is_expired(quote):
@@ -613,10 +615,10 @@ def refresh_quote(quote_id: str):
     """
     quote = quotes_store.load(quote_id)
     if not quote:
-        return jsonify({"success": False, "error": "Not found"}), 404
+        return jsonify({"success": False, "error": ERR_NOT_FOUND}), 404
 
     if quote.get("status") == "locked":
-        return jsonify({"success": False, "error": "Quote is locked"}), 409
+        return jsonify({"success": False, "error": "El presupuesto está bloqueado"}), 409
 
     now = quotes_store.now()
 
@@ -625,7 +627,7 @@ def refresh_quote(quote_id: str):
         quote["params"] = validate_quote_params(quote.get("params") or {})
     except ValueError as ve:
         quote["status"] = "recalc_required"
-        quote["error"] = f"invalid params: {str(ve)}"
+        quote["error"] = f"parámetros inválidos: {str(ve)}"
         quote["computed"] = {}
         quote["price"] = None
         quote["signature"] = sign_quote(quote)
@@ -675,22 +677,22 @@ def refresh_quote(quote_id: str):
 def lock_quote(quote_id: str):
     quote = quotes_store.load(quote_id)
     if not quote:
-        return jsonify({"success": False, "error": "Not found"}), 404
+        return jsonify({"success": False, "error": ERR_NOT_FOUND}), 404
 
     if quotes_store.is_expired(quote):
-        return jsonify({"success": False, "error": "Quote expired"}), 410
+        return jsonify({"success": False, "error": "El presupuesto ha expirado"}), 410
 
     # valida firma actual (si viene)
     body = request.get_json() or {}
     provided_sig = body.get("signature")
     if provided_sig and not verify_quote(quote, provided_sig):
-        return jsonify({"success": False, "error": "Invalid signature"}), 400
+        return jsonify({"success": False, "error": "Firma no válida"}), 400
 
     # si cambió config -> obliga recalcular (en este paso solo avisamos)
     current_version = config.get_config_version()
     required = quote.get("requiredConfigVersion") or quote.get("configVersion")
     if required != current_version:
-        return jsonify({"success": False, "error": "Config changed, recalc required"}), 409
+        return jsonify({"success": False, "error": "La configuración cambió; es necesario recalcular"}), 409
 
     quote["status"] = "locked"
     quote["lockedAtTs"] = quotes_store.now()
@@ -712,21 +714,21 @@ def request_entity_too_large(error):
     max_size = config.get('file_settings', 'max_file_size_mb', default=100)
     return jsonify({
         'success': False,
-        'error': f'File too large. Maximum size is {max_size}MB'
+        'error': f'Archivo demasiado grande. El tamaño máximo es {max_size}MB'
     }), 413
 
 
 @app.errorhandler(404)
 def not_found(error):
     """Handle 404 errors"""
-    return jsonify({'success': False, 'error': 'Resource not found'}), 404
+    return jsonify({'success': False, 'error': 'Recurso no encontrado'}), 404
 
 
 @app.errorhandler(500)
 def internal_error(error):
     """Handle 500 errors"""
     app.logger.error(f'Server Error: {error}')
-    return jsonify({'success': False, 'error': 'Internal server error'}), 500
+    return jsonify({'success': False, 'error': 'Error interno del servidor'}), 500
 
 
 # ============================================================================

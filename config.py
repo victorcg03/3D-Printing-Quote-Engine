@@ -45,7 +45,7 @@ class Config:
             "application": {
                 "name": "Machine Shop Suite",
                 "version": "1.0.0",
-                "description": "3D Printing Quote Engine"
+                "description": "Motor de presupuestos de impresión 3D"
             },
             "slicer": {
                 "path": os.getenv("PRUSA_SLICER_PATH", self.DEFAULT_SLICER_PATH),
@@ -54,7 +54,7 @@ class Config:
             "materials": {
                 "pla": {
                     "name": "PLA (Polylactic Acid)",
-                    "description": "Easy to print, biodegradable, good for prototypes",
+                    "description": "Fácil de imprimir, biodegradable, bueno para prototipos",
                     "density_g_cm3": 1.24,
                     "price_per_kg": 800,
                     "per_gram_price": 1.0,
@@ -67,7 +67,7 @@ class Config:
                 },
                 "abs": {
                     "name": "ABS (Acrylonitrile Butadiene Styrene)",
-                    "description": "Strong and durable, heat resistant, good for functional parts",
+                    "description": "Fuerte y duradero, resistente al calor, bueno para piezas funcionales",
                     "density_g_cm3": 1.04,
                     "price_per_kg": 1000,
                     "per_gram_price": 1.2,
@@ -80,7 +80,7 @@ class Config:
                 },
                 "petg": {
                     "name": "PETG (Polyethylene Terephthalate Glycol)",
-                    "description": "Strong, flexible, chemical resistant, food-safe option",
+                    "description": "Fuerte, flexible, resistente a químicos, opción apta para alimentos",
                     "density_g_cm3": 1.27,
                     "price_per_kg": 1000,
                     "per_gram_price": 1.2,
@@ -93,7 +93,7 @@ class Config:
                 },
                 "tpu": {
                     "name": "TPU (Thermoplastic Polyurethane)",
-                    "description": "Flexible and elastic, excellent for grips and cushioning",
+                    "description": "Flexible y elástico, excelente para agarres y amortiguación",
                     "density_g_cm3": 1.21,
                     "price_per_kg": 1500,
                     "per_gram_price": 2.0,
@@ -106,7 +106,7 @@ class Config:
                 },
                 "nylon": {
                     "name": "Nylon (Polyamide)",
-                    "description": "Very strong and durable, excellent layer adhesion",
+                    "description": "Muy fuerte y duradero, excelente adhesión entre capas",
                     "density_g_cm3": 1.14,
                     "price_per_kg": 1800,
                     "per_gram_price": 2.5,
@@ -120,24 +120,24 @@ class Config:
             },
             "print_quality": {
                 "draft": {
-                    "name": "Draft (Fast)",
+                    "name": "Borrador (Rápido)",
                     "layer_height": 0.3,
-                    "description": "Fastest print, visible layers, good for prototypes"
+                    "description": "Impresión más rápida, capas visibles, buena para prototipos"
                 },
                 "standard": {
-                    "name": "Standard (Balanced)",
+                    "name": "Estándar (Equilibrado)",
                     "layer_height": 0.2,
-                    "description": "Good balance of speed and quality"
+                    "description": "Buen equilibrio entre velocidad y calidad"
                 },
                 "fine": {
-                    "name": "Fine (Detailed)",
+                    "name": "Fino (Detallado)",
                     "layer_height": 0.15,
-                    "description": "Higher detail, longer print time"
+                    "description": "Mayor detalle, mayor tiempo de impresión"
                 },
                 "ultra_fine": {
-                    "name": "Ultra Fine (Maximum Detail)",
+                    "name": "Ultrafino (Máximo detalle)",
                     "layer_height": 0.1,
-                    "description": "Best quality, slowest print, minimal layer lines"
+                    "description": "Mejor calidad, impresión más lenta, líneas de capa mínimas"
                 }
             },
             "infill_options": {
@@ -166,7 +166,7 @@ class Config:
             "printers": {
                 "prusa_mk3s": {
                     "name": "Prusa i3 MK3S+",
-                    "description": "Original Prusa i3 MK3S+ FDM printer",
+                    "description": "Impresora FDM Original Prusa i3 MK3S+",
                     "bed_size_mm": [250, 210, 210],
                     "nozzle_diameter_mm": 0.4,
                     "max_print_speed_mm_s": 200,
@@ -175,7 +175,7 @@ class Config:
                 },
                 "ender3_v2": {
                     "name": "Creality Ender 3 V2",
-                    "description": "Creality Ender 3 V2 budget FDM printer",
+                    "description": "Impresora FDM económica Creality Ender 3 V2",
                     "bed_size_mm": [220, 220, 250],
                     "nozzle_diameter_mm": 0.4,
                     "max_print_speed_mm_s": 180,
@@ -184,7 +184,7 @@ class Config:
                 },
                 "bambu_x1": {
                     "name": "Bambu Lab X1 Carbon",
-                    "description": "Bambu Lab X1 Carbon high-speed printer",
+                    "description": "Impresora de alta velocidad Bambu Lab X1 Carbon",
                     "bed_size_mm": [256, 256, 256],
                     "nozzle_diameter_mm": 0.4,
                     "max_print_speed_mm_s": 500,
@@ -194,26 +194,26 @@ class Config:
             },
             "post_processing": {
                 "sanding": {
-                    "name": "Sanding & Smoothing",
-                    "description": "Manual sanding for smooth surface finish",
+                    "name": "Lijado y alisado",
+                    "description": "Lijado manual para un acabado de superficie suave",
                     "price": 500,
                     "enabled": True
                 },
                 "painting": {
-                    "name": "Painting",
-                    "description": "Professional spray painting with primer and topcoat",
+                    "name": "Pintura",
+                    "description": "Pintura en spray profesional con imprimación y capa final",
                     "price": 1500,
                     "enabled": True
                 },
                 "polishing": {
-                    "name": "Polishing",
-                    "description": "High-gloss polishing for aesthetic finish",
+                    "name": "Pulido",
+                    "description": "Pulido de alto brillo para un acabado estético",
                     "price": 800,
                     "enabled": True
                 },
                 "threading": {
-                    "name": "Threading/Tapping",
-                    "description": "Adding threads to holes for screws/bolts",
+                    "name": "Roscado/Machuelado",
+                    "description": "Añadir rosca a los orificios para tornillos/pernos",
                     "price": 300,
                     "enabled": True
                 }
