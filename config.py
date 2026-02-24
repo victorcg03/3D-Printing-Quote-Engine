@@ -160,8 +160,8 @@ class Config:
                 "depreciation_per_hour": 50,
                 "other_costs_per_print": 20,
                 "gst_rate": 0.18,
-                "currency": "INR",
-                "currency_symbol": "₹"
+                "currency": "EUR",
+                "currency_symbol": "€"
             },
             "printers": {
                 "prusa_mk3s": {

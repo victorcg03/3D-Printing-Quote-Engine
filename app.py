@@ -305,8 +305,8 @@ def calculate_quote():
             return jsonify({'success': False, 'error': 'Invalid printer'}), 400
 
         # Currency
-        currency = pricing_config.get('currency', 'INR')
-        currency_symbol = pricing_config.get('currency_symbol', '₹')
+        currency = pricing_config.get('currency', 'EUR')
+        currency_symbol = pricing_config.get('currency_symbol', '€')
         gst_rate = pricing_config.get('gst_rate', 0.18)
 
         # Check pricing mode
