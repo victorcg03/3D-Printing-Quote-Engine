@@ -36,36 +36,36 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libfontconfig1 \
     libfreetype6 \
   && rm -rf /var/lib/apt/lists/*
-  # PrusaSlicer (AppImage) -> extract (no FUSE)
-  RUN wget -q https://github.com/prusa3d/PrusaSlicer/releases/download/version_2.7.4/PrusaSlicer-2.7.4+linux-x64-GTK3-202404050928.AppImage \
-  -O /usr/local/bin/PrusaSlicer.AppImage \
-  && chmod +x /usr/local/bin/PrusaSlicer.AppImage \
-  && cd /usr/local/bin \
-  && ./PrusaSlicer.AppImage --appimage-extract \
-  && ln -s /usr/local/bin/squashfs-root/usr/bin/prusa-slicer /usr/local/bin/prusa-slicer \
-  && rm /usr/local/bin/PrusaSlicer.AppImage
+# PrusaSlicer (AppImage) -> extract (no FUSE)
+RUN wget -q https://github.com/prusa3d/PrusaSlicer/releases/download/version_2.7.4/PrusaSlicer-2.7.4+linux-x64-GTK3-202404050928.AppImage \
+-O /usr/local/bin/PrusaSlicer.AppImage \
+&& chmod +x /usr/local/bin/PrusaSlicer.AppImage \
+&& cd /usr/local/bin \
+&& ./PrusaSlicer.AppImage --appimage-extract \
+&& ln -s /usr/local/bin/squashfs-root/usr/bin/prusa-slicer /usr/local/bin/prusa-slicer \
+&& rm /usr/local/bin/PrusaSlicer.AppImage
   
-  WORKDIR /app
-  
-  # Python deps
-  COPY requirements.txt .
-  RUN pip install --no-cache-dir -r requirements.txt
-  
-  # App code
-  COPY app.py .
-  COPY config.py .
-  COPY utils.py .
-  COPY templates/ ./templates/
-  COPY static/ ./static/
-  COPY quotes_store.py .
-  COPY security.py .
-  
-  # Non-root user
-  RUN useradd -m -u 1000 -s /bin/bash appuser \
-  && mkdir -p /app/logs /app/data \
-  && chown -R appuser:appuser /app
-  
-  RUN ldd /usr/local/bin/squashfs-root/usr/bin/bin/prusa-slicer | grep "not found" || true
+WORKDIR /app
+
+# Python deps
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# App code
+COPY app.py .
+COPY config.py .
+COPY utils.py .
+COPY templates/ ./templates/
+COPY static/ ./static/
+COPY quotes_store.py .
+COPY security.py .
+
+# Non-root user
+RUN useradd -m -u 1000 -s /bin/bash appuser \
+&& mkdir -p /app/logs /app/data \
+&& chown -R appuser:appuser /app
+
+RUN ldd /usr/local/bin/squashfs-root/usr/bin/bin/prusa-slicer | grep "not found" || true
 # Entrypoint
 COPY docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh

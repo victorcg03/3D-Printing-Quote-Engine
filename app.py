@@ -516,10 +516,11 @@ def create_quote():
     try:
         data = request.get_json() or {}
 
-        params_in = data.get("params") or {}
+        # acepta payload plano o anidado
+        params_in = data.get("params") or data.get("print_details") or data.get("printDetails") or data
         params = validate_quote_params(params_in)
 
-        computed = data.get("computed") or {}
+        computed = data.get("computed") or data.get("quote") or data.get("breakdown") or {}
 
         quote_id = quotes_store.new_id()
         now = quotes_store.now()
@@ -534,8 +535,8 @@ def create_quote():
             "configVersion": config.get_config_version(),
             "params": params,
             "computed": computed,
-            "price": computed.get("price"),
-            "currency": computed.get("currency", "EUR"),
+            "price": computed.get("price") or computed.get("total_price") or computed.get("totalPrice"),
+            "currency": computed.get("currency") or computed.get("currency_symbol") or "EUR",
         }
 
         quote["signature"] = sign_quote(quote)
@@ -548,7 +549,46 @@ def create_quote():
     except Exception as e:
         app.logger.error(f"Error creating quote: {str(e)}")
         return jsonify({"success": False, "error": "Failed to create quote"}), 500
+@app.route("/api/quotes", methods=["GET"])
+def list_quotes():
+    if not require_admin():
+        return jsonify({"success": False, "error": "Unauthorized"}), 401
 
+    try:
+        # paginación simple
+        limit = int(request.args.get("limit", 50))
+        limit = max(1, min(200, limit))
+
+        cursor = request.args.get("cursor")  # opcional (si tu store lo soporta)
+        status = request.args.get("status")  # opcional
+        q = (request.args.get("q") or "").strip().lower()  # opcional
+
+        # si tu QuotesStore todavía no tiene list(), lo implementamos después
+        items = quotes_store.list(limit=limit, cursor=cursor, status=status, q=q)
+
+        # listado "lite" (no devuelvas computed completo por defecto)
+        lite = []
+        for it in items.get("items", []):
+            lite.append({
+                "quoteId": it.get("quoteId"),
+                "status": it.get("status"),
+                "createdAtTs": it.get("createdAtTs"),
+                "expiresAtTs": it.get("expiresAtTs"),
+                "price": it.get("price"),
+                "currency": it.get("currency", "EUR"),
+                "params": it.get("params", {}),
+            })
+
+        return jsonify({
+            "success": True,
+            "items": lite,
+            "nextCursor": items.get("nextCursor"),
+        })
+
+    except Exception as e:
+        app.logger.error(f"Error listing quotes: {str(e)}")
+        return jsonify({"success": False, "error": "Failed to list quotes"}), 500
+    
 @app.route("/api/quotes/<quote_id>", methods=["GET"])
 def get_quote(quote_id: str):
     quote = quotes_store.load(quote_id)
