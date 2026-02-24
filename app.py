@@ -8,7 +8,8 @@ import os
 import tempfile
 import logging
 from logging.handlers import RotatingFileHandler
-
+from quotes_store import QuotesStore
+from security import sign_quote, verify_quote
 from config import config
 from utils import allowed_file, convert_stl_to_gcode, extract_filament_usage
 
@@ -21,6 +22,7 @@ def require_admin():
     return token == ADMIN_TOKEN
 # Initialize Flask app
 app = Flask(__name__)
+quotes_store = QuotesStore()
 app.config['MAX_CONTENT_LENGTH'] = config.get('file_settings', 'max_file_size_mb', default=100) * 1024 * 1024
 app.config['UPLOAD_FOLDER'] = tempfile.gettempdir()
 # Configure logging
@@ -446,7 +448,90 @@ def manage_settings():
             app.logger.error(f"Error updating settings: {str(e)}")
             return jsonify({'success': False, 'error': str(e)}), 500
 
+@app.route("/api/quotes", methods=["POST"])
+def create_quote():
+    """
+    Paso 1: crea quote persistente desde payload JSON ya calculado.
+    En el siguiente paso lo conectamos con /api/slice + /api/calculate-quote.
+    """
+    try:
+        data = request.get_json() or {}
 
+        # aquí esperamos que el front mande params + (opcional) resultado slice
+        params = data.get("params") or {}
+        computed = data.get("computed") or {}  # {grams, hours, price, breakdown, currency}
+
+        quote_id = quotes_store.new_id()
+        now = quotes_store.now()
+        expires_in = int(os.environ.get("QUOTE_TTL_SECONDS", "1800"))  # 30min
+        expires_at = now + expires_in
+
+        quote = {
+            "quoteId": quote_id,
+            "status": "estimated",
+            "createdAtTs": now,
+            "expiresAtTs": expires_at,
+            "configVersion": config.get_config_version(),
+            "params": params,
+            "computed": computed,
+            "price": computed.get("price"),
+            "currency": computed.get("currency", "EUR"),
+        }
+        quote["signature"] = sign_quote(quote)
+
+        quotes_store.save(quote_id, quote)
+        return jsonify({"success": True, "quote": quote}), 201
+
+    except Exception as e:
+        app.logger.error(f"Error creating quote: {str(e)}")
+        return jsonify({"success": False, "error": "Failed to create quote"}), 500
+
+
+@app.route("/api/quotes/<quote_id>", methods=["GET"])
+def get_quote(quote_id: str):
+    quote = quotes_store.load(quote_id)
+    if not quote:
+        return jsonify({"success": False, "error": "Not found"}), 404
+
+    # expira
+    if quotes_store.is_expired(quote):
+        quote["status"] = "expired"
+        quote["signature"] = sign_quote(quote)
+        quotes_store.save(quote_id, quote)
+
+    return jsonify({"success": True, "quote": quote})
+
+
+@app.route("/api/quotes/<quote_id>/lock", methods=["POST"])
+def lock_quote(quote_id: str):
+    quote = quotes_store.load(quote_id)
+    if not quote:
+        return jsonify({"success": False, "error": "Not found"}), 404
+
+    if quotes_store.is_expired(quote):
+        return jsonify({"success": False, "error": "Quote expired"}), 410
+
+    # valida firma actual (si viene)
+    body = request.get_json() or {}
+    provided_sig = body.get("signature")
+    if provided_sig and not verify_quote(quote, provided_sig):
+        return jsonify({"success": False, "error": "Invalid signature"}), 400
+
+    # si cambió config -> obliga recalcular (en este paso solo avisamos)
+    current_version = config.get_config_version()
+    if quote.get("configVersion") != current_version:
+        return jsonify({"success": False, "error": "Config changed, recalc required"}), 409
+
+    quote["status"] = "locked"
+    quote["lockedAtTs"] = quotes_store.now()
+    # opcional: reduce TTL al lock (ej: 10 min)
+    lock_ttl = int(os.environ.get("QUOTE_LOCK_TTL_SECONDS", "600"))
+    quote["expiresAtTs"] = quotes_store.now() + lock_ttl
+
+    quote["signature"] = sign_quote(quote)
+    quotes_store.save(quote_id, quote)
+
+    return jsonify({"success": True, "quote": quote})
 # ============================================================================
 # ERROR HANDLERS
 # ============================================================================

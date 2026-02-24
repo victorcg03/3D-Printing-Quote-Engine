@@ -2,6 +2,7 @@
 Configuration management for Machine Shop Suite - 3D Printing Quote Engine
 """
 import os
+import hashlib
 import json
 from pathlib import Path
 
@@ -11,6 +12,13 @@ class Config:
 
     # Default PrusaSlicer path (overridden by environment variable or config file)
     DEFAULT_SLICER_PATH = "prusa-slicer"  # Assumes prusa-slicer is in PATH
+
+    def get_config_version(self) -> str:
+        """
+        Hash estable de la config actual para invalidar quotes cuando cambian settings.
+        """
+        payload = json.dumps(self.config_data, sort_keys=True, ensure_ascii=False).encode("utf-8")
+        return hashlib.sha256(payload).hexdigest()[:16]
 
     def __init__(self, config_file=os.environ.get("CONFIG_FILE", "/app/data/config.json")):
         """Initialize configuration from file or defaults"""
