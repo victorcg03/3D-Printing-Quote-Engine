@@ -1,5 +1,5 @@
 # Machine Shop Suite - 3D Printing Quote Engine
-FROM python:3.11-slim
+FROM public.ecr.aws/docker/library/python:3.11-slim
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
