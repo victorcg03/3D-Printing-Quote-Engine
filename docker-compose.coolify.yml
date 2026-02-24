@@ -1,0 +1,28 @@
+services:
+  quote-engine:
+    build: .
+    environment:
+      - FLASK_ENV=production
+      - FLASK_DEBUG=False
+      - PRUSA_SLICER_PATH=/usr/local/bin/prusa-slicer
+      - SECRET_KEY=${SECRET_KEY}
+    volumes:
+      - quote_config:/app/config.json
+      - quote_logs:/app/logs
+    expose:
+      - "5000"
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget -qO- http://localhost:5000/api/config | grep -q success",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  quote_config:
+  quote_logs:

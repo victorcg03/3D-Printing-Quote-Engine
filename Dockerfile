@@ -17,9 +17,9 @@ RUN apt-get update && apt-get install -y \
 
 # Download and install PrusaSlicer (AppImage)
 # Note: You may need to update the version number
-RUN wget https://github.com/prusa3d/PrusaSlicer/releases/download/version_2.7.0/PrusaSlicer-2.7.0+linux-x64-GTK3-202311210847.AppImage \
-    -O /usr/local/bin/PrusaSlicer.AppImage \
-    && chmod +x /usr/local/bin/PrusaSlicer.AppImage
+RUN wget https://github.com/prusa3d/PrusaSlicer/releases/download/version_2.7.4/PrusaSlicer-2.7.4+linux-x64-GTK3-202404050928.AppImage \
+  -O /usr/local/bin/PrusaSlicer.AppImage \
+  && chmod +x /usr/local/bin/PrusaSlicer.AppImage
 
 # Extract AppImage (since AppImage needs FUSE which doesn't work well in Docker)
 RUN cd /usr/local/bin \
