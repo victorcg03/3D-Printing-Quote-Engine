@@ -10,19 +10,17 @@ ENV PYTHONUNBUFFERED=1 \
 RUN apt-get update && apt-get install -y --no-install-recommends \
     wget ca-certificates \
     gosu \
-    # OpenGL
     libgl1 \
     libglu1-mesa \
-    # Core runtime libs
+    libegl1 \
+    libgles2 \
     libglib2.0-0 \
-    # GTK3 runtime (PrusaSlicer GTK3 build)
     libgtk-3-0 \
     libgdk-pixbuf-2.0-0 \
     libpango-1.0-0 \
     libcairo2 \
     libatk1.0-0 \
     libatk-bridge2.0-0 \
-    # X11 libs commonly required by GTK apps
     libx11-6 \
     libxext6 \
     libxrender1 \
@@ -35,40 +33,39 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxinerama1 \
     libsm6 \
     libice6 \
-    # Fonts/rendering
     libfontconfig1 \
     libfreetype6 \
   && rm -rf /var/lib/apt/lists/*
-
-# PrusaSlicer (AppImage) -> extract (no FUSE)
-RUN wget -q https://github.com/prusa3d/PrusaSlicer/releases/download/version_2.7.4/PrusaSlicer-2.7.4+linux-x64-GTK3-202404050928.AppImage \
-    -O /usr/local/bin/PrusaSlicer.AppImage \
- && chmod +x /usr/local/bin/PrusaSlicer.AppImage \
- && cd /usr/local/bin \
- && ./PrusaSlicer.AppImage --appimage-extract \
- && ln -s /usr/local/bin/squashfs-root/usr/bin/prusa-slicer /usr/local/bin/prusa-slicer \
- && rm /usr/local/bin/PrusaSlicer.AppImage
-
-WORKDIR /app
-
-# Python deps
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-# App code
-COPY app.py .
-COPY config.py .
-COPY utils.py .
-COPY templates/ ./templates/
-COPY static/ ./static/
-COPY quotes_store.py .
-COPY security.py .
-
-# Non-root user
-RUN useradd -m -u 1000 -s /bin/bash appuser \
- && mkdir -p /app/logs /app/data \
- && chown -R appuser:appuser /app
-
+  # PrusaSlicer (AppImage) -> extract (no FUSE)
+  RUN wget -q https://github.com/prusa3d/PrusaSlicer/releases/download/version_2.7.4/PrusaSlicer-2.7.4+linux-x64-GTK3-202404050928.AppImage \
+  -O /usr/local/bin/PrusaSlicer.AppImage \
+  && chmod +x /usr/local/bin/PrusaSlicer.AppImage \
+  && cd /usr/local/bin \
+  && ./PrusaSlicer.AppImage --appimage-extract \
+  && ln -s /usr/local/bin/squashfs-root/usr/bin/prusa-slicer /usr/local/bin/prusa-slicer \
+  && rm /usr/local/bin/PrusaSlicer.AppImage
+  
+  WORKDIR /app
+  
+  # Python deps
+  COPY requirements.txt .
+  RUN pip install --no-cache-dir -r requirements.txt
+  
+  # App code
+  COPY app.py .
+  COPY config.py .
+  COPY utils.py .
+  COPY templates/ ./templates/
+  COPY static/ ./static/
+  COPY quotes_store.py .
+  COPY security.py .
+  
+  # Non-root user
+  RUN useradd -m -u 1000 -s /bin/bash appuser \
+  && mkdir -p /app/logs /app/data \
+  && chown -R appuser:appuser /app
+  
+  RUN ldd /usr/local/bin/squashfs-root/usr/bin/bin/prusa-slicer | grep "not found" || true
 # Entrypoint
 COPY docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
