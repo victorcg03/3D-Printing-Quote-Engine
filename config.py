@@ -12,7 +12,7 @@ class Config:
     # Default PrusaSlicer path (overridden by environment variable or config file)
     DEFAULT_SLICER_PATH = "prusa-slicer"  # Assumes prusa-slicer is in PATH
 
-    def __init__(self, config_file='config.json'):
+    def __init__(self, config_file=os.environ.get("CONFIG_FILE", "/app/data/config.json")):
         """Initialize configuration from file or defaults"""
         self.config_file = config_file
         self.config_data = self._load_config()
@@ -21,12 +21,15 @@ class Config:
         """Load configuration from JSON file or return defaults"""
         if os.path.exists(self.config_file):
             try:
-                with open(self.config_file, 'r') as f:
-                    return json.load(f)
+              with open(self.config_file, "r", encoding="utf-8") as f:
+                   return json.load(f)
             except Exception as e:
                 print(f"Error loading config file: {e}")
                 return self._default_config()
-        return self._default_config()
+        data = self._default_config()
+        self.config_data = data
+        self.save()
+        return data
 
     def _default_config(self):
         """Return default configuration"""
@@ -215,14 +218,20 @@ class Config:
         }
 
     def save(self):
-        """Save current configuration to JSON file"""
-        try:
-            with open(self.config_file, 'w') as f:
-                json.dump(self.config_data, f, indent=2)
-            return True
-        except Exception as e:
-            print(f"Error saving config: {e}")
-            return False
+      """Save current configuration to JSON file (atomic write)"""
+      try:
+        config_path = Path(self.config_file)
+        config_path.parent.mkdir(parents=True, exist_ok=True)
+
+        tmp_path = config_path.with_suffix(config_path.suffix + ".tmp")
+        with open(tmp_path, "w", encoding="utf-8") as f:
+            json.dump(self.config_data, f, indent=2, ensure_ascii=False)
+
+        os.replace(tmp_path, config_path)  # atomic on same filesystem
+        return True
+      except Exception as e:
+        print(f"Error saving config: {e}")
+        return False
 
     def get(self, *keys, default=None):
         """Get nested configuration value using dot notation or keys"""

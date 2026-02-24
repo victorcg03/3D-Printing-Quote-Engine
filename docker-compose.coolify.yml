@@ -6,8 +6,9 @@ services:
       - FLASK_DEBUG=False
       - PRUSA_SLICER_PATH=/usr/local/bin/prusa-slicer
       - SECRET_KEY=${SECRET_KEY}
+      - CONFIG_FILE=/app/data/config.json
     volumes:
-      - quote_config:/app/config.json
+      - quote_config:/app/data
       - quote_logs:/app/logs
     expose:
       - "5000"
