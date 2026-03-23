@@ -128,7 +128,23 @@ PRUSA_SLICER_PATH=prusa-slicer  # or full path to executable
 FLASK_ENV=production
 FLASK_DEBUG=False
 SECRET_KEY=your-secret-key-here
+
+# Admin access (protects /settings and admin APIs)
+# If ADMIN_TOKEN is set, you must provide it to access admin routes.
+ADMIN_TOKEN=your-admin-token-here
 ```
+
+### Admin Panel Access
+
+If you set `ADMIN_TOKEN`, admin routes require the token:
+
+- Open the settings UI with a query parameter:
+  - `http://localhost:5000/settings?token=YOUR_ADMIN_TOKEN`
+- API calls can also use headers:
+  - `X-Admin-Token: YOUR_ADMIN_TOKEN`
+  - or `Authorization: Bearer YOUR_ADMIN_TOKEN`
+
+Note: the settings UI reads `token` from the URL and forwards it as `X-Admin-Token` to `/api/settings`.
 
 ### Configuration File
 

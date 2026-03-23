@@ -17,12 +17,13 @@
     {% block extra_head %}{% endblock %}
   </head>
   <body class="bg-gray-50 min-h-screen">
+    {% set token = request.args.get('token') %}
     <!-- Navigation -->
     <nav class="bg-white shadow-sm border-b border-gray-200">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
           <div class="flex items-center">
-            <a href="/" class="flex items-center space-x-3">
+            <a href="{{ url_for('index', token=token) if token else url_for('index') }}" class="flex items-center space-x-3">
               <svg
                 class="w-8 h-8"
                 style="color: #ff5733"
@@ -50,14 +51,14 @@
 
           <div class="flex items-center space-x-4">
             <a
-              href="/"
+              href="{{ url_for('index', token=token) if token else url_for('index') }}"
               class="text-gray-700 px-3 py-2 rounded-md text-sm font-medium {% if request.path == '/' %}text-white{% endif %}"
               style="{% if request.path == '/' %}background-color: #ff5733{% else %}hover:color: #ff5733{% endif %}"
             >
               Cotizador
             </a>
             <a
-              href="/settings"
+              href="{{ url_for('settings_page', token=token) if token else url_for('settings_page') }}"
               class="text-gray-700 px-3 py-2 rounded-md text-sm font-medium {% if request.path == '/settings' %}text-white{% endif %}"
               style="{% if request.path == '/settings' %}background-color: #ff5733{% else %}hover:color: #ff5733{% endif %}"
             >

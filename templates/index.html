@@ -115,16 +115,7 @@ Shop Suite{% endblock %} {% block extra_head %}
           >
             <option value="">Selecciona impresora...</option>
             {% for key, printer in printers.items() %}
-            <option
-              value="{{ key }}"
-              {%
-              if
-              key=""
-              ="prusa_mk3s"
-              %}selected{%
-              endif
-              %}
-            >
+            <option value="{{ key }}" {% if key == "prusa_mk3s" %}selected{% endif %}>
               {{ printer.name }} ({{ printer.bed_size_mm[0] }}x{{
               printer.bed_size_mm[1] }}x{{ printer.bed_size_mm[2] }}mm)
             </option>
@@ -146,7 +137,7 @@ Shop Suite{% endblock %} {% block extra_head %}
           >
             <option value="">Selecciona material...</option>
             {% for key, mat in materials.items() %}
-            <option value="{{ key }}" {% if key="" ="pla" %}selected{% endif %}>
+            <option value="{{ key }}" {% if key == "pla" %}selected{% endif %}>
               {{ mat.name }} - {{ mat.price_per_kg }}€/kg
             </option>
             {% endfor %}
@@ -167,16 +158,7 @@ Shop Suite{% endblock %} {% block extra_head %}
           >
             <option value="">Selecciona calidad...</option>
             {% for key, qual in qualities.items() %}
-            <option
-              value="{{ key }}"
-              {%
-              if
-              key=""
-              ="standard"
-              %}selected{%
-              endif
-              %}
-            >
+            <option value="{{ key }}" {% if key == "standard" %}selected{% endif %}>
               {{ qual.name }} ({{ qual.layer_height }}mm)
             </option>
             {% endfor %}
